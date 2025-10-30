@@ -18,3 +18,11 @@ project/metals.sbt
 project/project/
 project/target/
 target/
+.scala-build/
+target/
+.scala-build/
+target/
+.bloop/
+.metals/
+.idea/
+.DS_Store
