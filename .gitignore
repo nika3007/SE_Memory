@@ -7,8 +7,16 @@
 target/
 project/target/
 project/project/
+project/boot/
+project/plugins/project/
+project/local-plugins.sbt
+lib_managed/
+src_managed/
+dist/
+local.sbt
+.history
 
-# Scala 
+# Scala compiled files
 *.class
 *.tasty
 *.log
@@ -25,3 +33,8 @@ project/project/
 
 # Worksheets
 *.worksheet.sc
+
+
+#GitHub zeigt nur deinen echten Quellcode (.scala, .sbt, .md, .gitignore, etc.).
+Alle temporären Dateien (.bsp, .metals, .scala-build, target/, etc.) bleiben lokal.
+Deine Struktur ist identisch zur deiner Freundin — keine unnötigen Dateien im Repo mehr.

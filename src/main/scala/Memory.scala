@@ -29,4 +29,4 @@ source ~/.zshrc
 echo $JAVA_HOME
 java -version
 sbt sbtVersion
- */
+*/
