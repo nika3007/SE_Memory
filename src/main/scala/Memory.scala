@@ -4,19 +4,8 @@
 
   println(s" Welcome to Memory! ($rows x $cols)\n")
 
-  val symbols = Vector("🍎", "🍇", "🍒", "🍌", "🍉", "🍑", "🍓", "🍍","🥝","🍐","🍊","⭐","❄️","🔥","🎲","🐱","🐶","🐼")
-  val needed  = rows * cols / 2
-  val pool    = (symbols.take(needed) ++ symbols.take(needed)).toVector
-  val deck    = scala.util.Random.shuffle(pool)
-
-  // gib feld aus
-  for (r <- 0 until rows)
-    println((0 until cols).map(c => s"[${deck(r * cols + c)}]").mkString(" "))
-
-  println("\nAll cards are shuffled and ready!")
-
-//sbt "runMain MemoryGame 6 4"
-
+  val tui = new MemoryTui(rows, cols)
+  tui.run()
 
 /*
 

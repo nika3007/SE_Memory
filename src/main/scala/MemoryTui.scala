@@ -1,89 +1,52 @@
 import scala.io.StdIn.readLine
 import scala.util.Random
+import scala.util.Try
 
-@main def MemoryTUI(): Unit =
-  println("=== Welcome to Memory (Text UI) ===")
-  print("Enter your name: ")
-  val name = readLine()
-  println(s"Hello, $name!\n")
+class MemoryTui(rows: Int, cols: Int):
+  val symbols = Vector("🍎", "🍇", "🍒", "🍌", "🍉", "🍑", "🍓", "🍍", "⭐", "❄️", "🔥", "🎲", "🐱", "🐶", "🐼")
+  val needed = rows * cols / 2
+  val deck = scala.util.Random.shuffle(symbols.take(needed) ++ symbols.take(needed))
+  val cards = deck.zipWithIndex.map { case (s, i) => Card(i, s) }.toVector
+  var board = Board(cards)
 
-  val rows = 2
-  val cols = 4
-  val deck = createDeck(rows, cols)            // erzeugt Karten – unabhängig vom MemoryGame-Code
-  var board = Board(deck, selection = None)
+  def run(): Unit =
+    println(s"🎮 Memory gestartet! ($rows x $cols)\n")
 
-  // 🔹 Spielfeld einmal am Anfang anzeigen
-  printBoard(board, rows, cols)
-
-  // --- Hauptspielschleife ---
-  while !board.allMatched do
-    println(s"Choose a card index (0–${board.cards.size - 1}):")
-    val input = readLine()
-
-    if input.forall(_.isDigit) then
-      val idx = input.toInt
-      val (newBoard, result) = board.choose(idx)
-      board = newBoard
+    while (!board.allMatched)
+      showBoard()
+      println("Wähle eine Karte (0 bis " + (cards.size - 1) + "):")
+      val input = scala.io.StdIn.readInt()
+      val (nextBoard, result) = board.choose(input)
+      board = nextBoard
 
       result match
-        // -------------------------
-        // Erste Karte aufgedeckt
-        // -------------------------
-        case None =>
-          printBoard(board, rows, cols)
-          println("(choose another card)")
+        case Some(true)  => 
+          println("✅ Treffer!")
+          //board = nextBoard
 
-        // -------------------------
-        // Zweite Karte – Treffer
-        // -------------------------
-        case Some(true) =>
-          printBoard(board, rows, cols)
-          println("✅ Match found!")
+        case Some(false) => 
+          println("❌ Kein Treffer.")
+          //board = nextBoard
+          showBoard()
+          Thread.sleep(1500) // warte 1.5 Sekunden
+          println("nächste Runde...")
+          board = board.copy(cards = board.cards.map {
+          case c if c.isFaceUp && !c.isMatched => c.flip
+          case c => c
+          })
 
-        // -------------------------
-        // Zweite Karte – kein Treffer
-        // -------------------------
-        case Some(false) =>
-          printBoard(board, rows, cols)
-          println("❌ Not a match! (press ENTER to continue)")
-          readLine()
-          // falsche Karten wieder verdecken
-          board = Board(
-            board.cards.map { c =>
-              if c.isFaceUp && !c.isMatched then c.flip else c
-            },
-            selection = None
-          )
-    else
-      println("Invalid input.")
+        case None        => 
+          println("zweite Karte wählen...")
+          //board = nextBoard
 
-  println("\n🎉 All cards matched! You win!")
+    println("🎉 Alle Paare gefunden! Du hast gewonnen!")
 
-// ------------------------------------------------------
-// Hilfsfunktion zum Erstellen des Decks (lokal hier, MemoryGame bleibt unverändert)
-// ------------------------------------------------------
-
-def createDeck(rows: Int, cols: Int): Vector[Card] =
-  val symbols = Vector(
-    "🍎","🍇","🍒","🍌","🍉","🍑",
-    "🍓","🍍","🥝","🍐","🍊","⭐",
-    "❄️","🔥","🎲","🐱","🐶","🐼"
-  )
-  val needed  = (rows * cols) / 2
-  val pool    = (symbols.take(needed) ++ symbols.take(needed)).toVector
-  Random.shuffle(pool.zipWithIndex.map((sym, i) => Card(i, sym)))
-
-// ------------------------------------------------------
-// Spielfeld-Ausgabe mit gleichmäßiger Formatierung (wie MemoryGame)
-// ------------------------------------------------------
-
-def printBoard(board: Board, rows: Int, cols: Int): Unit =
-  println("\nCurrent Board:")
-  for (r <- 0 until rows) do
-    val row = for (c <- 0 until cols) yield
-      val idx = r * cols + c
-      val card = board.cards(idx)
-      if card.isMatched then "[✔]"
-      else if card.isFaceUp then f"[${card.symbol}%-2s]"  // gleiche Breite für alle Symbole
-      else "[❓]"
-    println(row.mkString(" "))
+  def showBoard(): Unit =
+    for (r <- 0 until rows)
+      println((0 until cols).map { c =>
+        val i = r * cols + c
+        val card = board.cards(i)
+        if card.isMatched then s"[✅]"
+        else if card.isFaceUp then s"[${card.symbol}]"
+        else "[ ]"
+    }.mkString(" "))
