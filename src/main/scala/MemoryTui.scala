@@ -1,8 +1,6 @@
 import scala.io.StdIn.readLine
 import scala.util.Random
 import scala.util.Try
-import scala.util.{Try, Success, Failure}
-import java.io.EOFException
 
 
 class MemoryTui(rows: Int, cols: Int):
