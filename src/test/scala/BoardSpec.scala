@@ -1,5 +1,7 @@
 import org.scalatest.wordspec.AnyWordSpec // ermöglicht specs
 import org.scalatest.matchers.should.Matchers
+import model.Card
+import model.Board
 
 final class BoardSpec extends AnyWordSpec with Matchers {
 

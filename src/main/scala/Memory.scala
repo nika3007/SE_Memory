@@ -1,10 +1,15 @@
-@main def MemoryGame(rows: Int = 4, cols: Int = 4): Unit =
-  require(rows > 0 && cols > 0, "rows and cols must be positive")
-  require((rows * cols) % 2 == 0, "rows * cols must be even")
+import aview.MemoryTui
+import controller.Controller
+import model.Card
+import model.Board
+import model.MemoryGame
 
-  println(s" Welcome to Memory! ($rows x $cols)\n")
+@main def runMemory: Unit =
+  
+  println(s" Welcome to Memory!")
 
-  val tui = new MemoryTui(rows, cols)
+  val controller = Controller(4, 4)
+  val tui = MemoryTui(controller)
   tui.run()
 
 /*

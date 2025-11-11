@@ -1,3 +1,5 @@
+package model
+
 final case class Board(cards: Vector[Card], selection: Option[Int] = None):
   // drehe um, ignoriere Ungültiges
   def flipAt(i: Int): Board =
