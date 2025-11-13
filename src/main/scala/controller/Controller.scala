@@ -1,34 +1,85 @@
 package controller
 
-import model.Card
-import model.Board
 import model.MemoryGame
-
+import model.Board
 import util.Observable
+import scala.util.Try
 
 class Controller(rows: Int, cols: Int) extends Observable:
 
-  private var game = MemoryGame(rows, cols)
-  private var lastResult: Option[Boolean] = None
+  var game: MemoryGame = MemoryGame(rows, cols)
 
-  def chooseCard(index: Int): Unit =
-    val (newBoard, result) = game.board.choose(index)
-    game.board = newBoard
-    lastResult = result
-    notifyObservers()
+  def board: Board = game.board
 
-    // Wenn kein Match, Karten zurückdrehen nach kurzer Zeit
+  def processInput(input: String): Boolean =
+    // Spiel beenden, wenn Abbruchbedingung
+    if input == null || input.trim.isEmpty then
+      println("Spiel beendet durch Eingabeabbruch. Bye👋")
+      return false
+
+    // Zahl prüfen
+    val inputOpt = Try(input.toInt).toOption
+
+    inputOpt match
+      case Some(i) if i >= 0 && i < board.cards.size =>
+        handleCardSelection(i)
+        true
+
+      case _ =>
+        println(s"❗ Ungültige Eingabe. Bitte Zahl zwischen 0 und ${board.cards.size - 1}.")
+        true
+
+
+
+  // Spiellogik:
+
+  private def handleCardSelection(i: Int): Unit =
+    val oldBoard = board
+    val (nextBoard, result) = board.choose(i)
+
+    // Ungültige, wenn schon matched / faceUp / gleiche Karte ---
+    val invalid = (nextBoard eq oldBoard) && result.isEmpty
+
+    if invalid then
+      println(s"❗ Karte $i kann nicht gewählt werden (bereits offen oder matched).\n")
+      return
+
+    // Gültige Karte:
+    game.board = nextBoard
+
     result match
-      case Some(false) =>
-        Thread.sleep(1500)
-        val flippedBack = game.board.cards.map {
-          case c if c.isFaceUp && !c.isMatched => c.flip
-          case c => c
-        }
-        game.board = Board(flippedBack)
-        notifyObservers()
-      case _ => ()
 
-  def getBoard: Board = game.board
-  def getLastResult: Option[Boolean] = lastResult
-  def isFinished: Boolean = game.board.allMatched
+      //erste Karte:
+      case None =>
+        // Erst Board anzeigen
+        notifyObservers()
+
+        // Dann Meldung unter Board
+        println()
+        println("zweite Karte wählen...")
+        notifyObservers()
+
+      // Match:
+      case Some(true) =>
+        notifyObservers()
+        println("✅ Treffer!\n")
+
+      // Kein Match:
+      case Some(false) =>
+        notifyObservers()
+        println("❌ Kein Treffer.\n")
+
+        Thread.sleep(1500)
+        println()
+        println("nächste Runde...\n")
+
+        // Karten zurückdrehen
+        val resetBoard = board.copy(
+          cards = board.cards.map {
+            case c if c.isFaceUp && !c.isMatched => c.flip
+            case c => c
+          }
+        )
+
+        game.board = resetBoard
+        notifyObservers()
