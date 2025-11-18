@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klasse wird nicht weiter ausgebaut
 
-  // helper funktion um randomness zu meiden, für tests ungeeignet, deshalb kleines fixed board privat da es nur in der spec genutzt wird
+  //hilfsfunktion, kleines board, um randomness zu vermeiden-> fürs testen
   private def smallBoard(): Board =
     Board(Vector(
       Card(0, "A"), // pair A

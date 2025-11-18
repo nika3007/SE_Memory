@@ -31,9 +31,7 @@ final case class Board(cards: Vector[Card], selection: Option[Int] = None):
             )
           else
           // beide Karten karten werden sofort umgedreht, wenn kein match
-         b2.copy(
-            cards = b2.cards.updated(prev, c1.flip).updated(i, c2.flip),
-            selection = None
-          )
+         b2.copy(selection = None)
         (next, Some(isMatch))
+        
   def allMatched: Boolean = cards.forall(_.isMatched)
