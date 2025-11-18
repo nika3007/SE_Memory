@@ -30,8 +30,9 @@ final case class Board(cards: Vector[Card], selection: Option[Int] = None):
               selection = None // selection reinigen für andere karten
             )
           else
+
           // beide Karten karten werden sofort umgedreht, wenn kein match
          b2.copy(selection = None)
         (next, Some(isMatch))
-        
+
   def allMatched: Boolean = cards.forall(_.isMatched)
