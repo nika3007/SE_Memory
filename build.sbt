@@ -11,5 +11,9 @@ lazy val root = project
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test
   )
 
+coverageEnabled := true
+coverageMinimumStmtTotal := 80
+coverageFailOnMinimum := false
+
 //Compile / run / mainClass := Some("MemoryGame")
 //Compile / run / javaOptions += "-Dfile.encoding=UTF-8"
