@@ -19,7 +19,7 @@ class MemoryTui(controller: Controller) extends Observer:
       val input = readLine()
 
       val continue = controller.processInput(input)
-      
+
       if !continue then return   // <<< HARTE ABBRUCH-KONTROLLE
 
     println("Alle Paare gefunden! Du hast gewonnen! 🎉")
