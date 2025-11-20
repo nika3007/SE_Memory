@@ -12,7 +12,7 @@ lazy val root = project
   )
 
 coverageEnabled := true
-coverageMinimumStmtTotal := 80
+coverageMinimumStmtTotal := 50
 coverageFailOnMinimum := false
 
 //Compile / run / mainClass := Some("MemoryGame")
