@@ -1,3 +1,5 @@
+[![Coverage Status](https://coveralls.io/repos/github/nika3007/SE_Memory/badge.svg?branch=main)](https://coveralls.io/github/nika3007/SE_Memory?branch=main)
+
 ## sbt project compiled with Scala 3
 
 ### Usage
