@@ -1,3 +1,5 @@
+package model
+
 import org.scalatest.wordspec.AnyWordSpec // ermöglicht specs
 import org.scalatest.matchers.should.Matchers
 import model.Card
@@ -24,15 +26,22 @@ final class BoardSpec extends AnyWordSpec with Matchers {
       b2.selection shouldBe None // resetten für die nächste runde
     }
 
-    "flip both face down when the second card doesn't match" in {
+    "leave both cards face up on mismatch (controller handles flip-back)" in {
       val b0 = Board(Vector(Card(0,"A"), Card(1,"B")))
-      val (b1, _) = b0.choose(0) // erste karte aufdecken
-      val (b2, r2) = b1.choose(1) // zweite karte aufdecken
-      r2 shouldBe Some(false) // zweite karte ist kein match
-      b2.cards(0).isFaceUp shouldBe false
-      b2.cards(1).isFaceUp shouldBe false // beide karten werden wieder umgedreht
-      b2.selection shouldBe None // es gibt keine auswahl --> nächste runde
+      val (b1, _) = b0.choose(0)
+      val (b2, r2) = b1.choose(1)
+
+      // zweiter Klick → mismatch
+      r2 shouldBe Some(false)
+
+      // Beide bleiben offen (MVC)
+      b2.cards(0).isFaceUp shouldBe true
+      b2.cards(1).isFaceUp shouldBe true
+
+      // Auswahl zurückgesetzt
+      b2.selection shouldBe None
     }
+
 
     "ignore invalid clicks, same-card double click etc..." in {
       val matched = Card(0,"A", isFaceUp=true, isMatched=true)
