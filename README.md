@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/nika3007/SE_Memory/badge.svg?branch=main)](https://coveralls.io/github/nika3007/SE_Memory?branch=main)
+[![CI](https://github.com/nika3007/SE_Memory/actions/workflows/ci.yml/badge.svg)](https://github.com/nika3007/SE_Memory/actions/workflows/ci.yml)
 
 ## sbt project compiled with Scala 3
 
