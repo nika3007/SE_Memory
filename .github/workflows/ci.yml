@@ -16,7 +16,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # NEW: install sbt on the runner
+      # NEW: install sbt on the runner - ohne kam es zu fails
       - name: Install sbt
         uses: coursier/setup-action@v1
         with:
