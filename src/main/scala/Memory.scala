@@ -5,7 +5,7 @@ import model.Board
 import model.MemoryGame
 
 @main def runMemory: Unit =
-  
+
   println(s" Welcome to Memory!")
 
   val controller = Controller(4, 4)
