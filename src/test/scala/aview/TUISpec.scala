@@ -69,15 +69,19 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
       val cards = Vector(Card(0,"A"), Card(1,"A"), Card(2,"B"), Card(3,"B"))
       val controller = new Controller(2, 2)
       controller.game.board = Board(cards)
+
       val tui = new MemoryTui(controller)
+
+      controller.processInput("0")
 
       val out = new ByteArrayOutputStream()
       Console.withOut(out) {
         tui.update  // ruft boardToString intern auf
       }
 
-      val output = out.toString.trim
-      output should include ("[ ] [ ]")
+      val output = out.toString
+      output should include ("zweite Karte wählen...")
+      output should include ("[A] [ ]")
       output should include ("\n")
     }
 
