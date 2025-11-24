@@ -64,5 +64,15 @@ final class BoardSpec extends AnyWordSpec with Matchers {
       ))
       done.allMatched shouldBe true
     }
+
+    "ignore flipAt on invalid indices" in {
+      val b0 = Board(Vector(Card(0,"A"), Card(1,"A")))
+
+      val bNeg = b0.flipAt(-1)
+      bNeg shouldBe b0        // Erwartung: unverändert
+
+      val bOut = b0.flipAt(2)
+      bOut shouldBe b0        // Erwartung: unverändert
+    }
   }
 }

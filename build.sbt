@@ -14,7 +14,6 @@ lazy val root = project
 coverageEnabled := true
 coverageMinimumStmtTotal := 50
 coverageFailOnMinimum := false
-coverageExcludedFiles := """.*/MemorySkalierbar\.scala"""
 
 
 
