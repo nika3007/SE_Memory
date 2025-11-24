@@ -61,7 +61,7 @@ class MemoryTui(controller: Controller) extends Observer:
         println(boardToString)
         //println()
 
-    controller.gameStatus = GameStatus.Idle
+    //controller.gameStatus = GameStatus.Idle
     true
 
   def boardToString: String =
