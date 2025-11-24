@@ -73,7 +73,7 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val out = new ByteArrayOutputStream()
       Console.withOut(out) {
-        tui.update()  // ruft boardToString intern auf
+        tui.update  // ruft boardToString intern auf
       }
 
       val output = out.toString.trim

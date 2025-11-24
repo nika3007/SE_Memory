@@ -2,6 +2,7 @@ package aview
 
 import controller.Controller
 import util.Observer
+import controller.GameStatus
 import scala.io.StdIn.readLine
 
 class MemoryTui(controller: Controller) extends Observer:
@@ -9,23 +10,59 @@ class MemoryTui(controller: Controller) extends Observer:
   controller.add(this)
 
   def run(): Unit =
+    //Start:
     println(s"🎮 Memory gestartet! (${controller.game.rows} x ${controller.game.cols})\n")
 
     //Zeige zu Beginn das Board an:
-    controller.notifyObservers()
+    controller.notifyObservers
 
     while (!controller.board.allMatched) do
+      println()
       println(s"Wähle eine Karte (0 bis ${controller.board.cards.size - 1}):")
       val input = readLine()
-
+      println()
       val continue = controller.processInput(input)
+      
 
-      if !continue then return   // <<< HARTE ABBRUCH-KONTROLLE
+      //Abbruch:
+      if !continue then 
+        println("Spiel beendet durch Eingabeabbruch. Bye👋")
+        println()
+        return   // <<< HARTE ABBRUCH-KONTROLLE
 
     println("Alle Paare gefunden! Du hast gewonnen! 🎉")
 
-  override def update(): Unit =
-    println(boardToString)
+  override def update: Boolean =
+    val msg = GameStatus.message(controller.gameStatus)
+
+    // 1) Meldung immer zuerst
+    if msg.nonEmpty then
+      println(msg)
+      //println()
+
+    // 2) Bei FirstCard und NextRound das Board NACH der Meldung
+    controller.gameStatus match
+      case GameStatus.SecondCard =>
+        println(boardToString)
+        //println()
+      case GameStatus.NextRound =>
+        println(boardToString)
+        //println()
+      case GameStatus.Match =>
+        println(boardToString)
+        //println()
+      case GameStatus.NoMatch =>
+        println(boardToString)
+        println()
+      case GameStatus.InvalidSelection(i) =>
+        println(boardToString)
+        //println()
+      case GameStatus.Idle =>
+        println(boardToString)
+        //println()
+
+    controller.gameStatus = GameStatus.Idle
+    true
 
   def boardToString: String =
     val rows = controller.game.rows

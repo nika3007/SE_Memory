@@ -15,8 +15,8 @@ final case class Board(cards: Vector[Card], selection: Option[Int] = None):
         (flipAt(i).copy(selection = Some(i)), None) // eine karte gewählt, drehe um & warte auf nächste karte
         // None wenn nichts gewählt wird
 
-      case Some(prev) if prev == i => // gleiche aufgedeckte karte wurde nochmal "aufgedeckt"
-        (this, None) // nichts passiert
+      //case Some(prev) if prev == i => // gleiche aufgedeckte karte wurde nochmal "aufgedeckt"
+      //  (this, None) // nichts passiert
 
       case Some(prev) => // zweite karte wird aufgedeckt -> prüfe ob beide gleich sind
         val b2 = flipAt(i)

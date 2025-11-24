@@ -8,13 +8,16 @@ import scala.util.Try
 class Controller(rows: Int, cols: Int) extends Observable:
 
   var game: MemoryGame = MemoryGame(rows, cols)
+  var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
   def board: Board = game.board
 
   def processInput(input: String): Boolean =
     // Spiel beenden, wenn Abbruchbedingung
     if input == null || input.trim.isEmpty then
-      println("Spiel beendet durch Eingabeabbruch. Bye👋")
+      //gameStatus = GameStatus.Idle
+      //notifyObservers()
+      //println("Spiel beendet durch Eingabeabbruch. Bye👋")
       return false
 
     // Zahl prüfen
@@ -26,7 +29,9 @@ class Controller(rows: Int, cols: Int) extends Observable:
         true
 
       case _ =>
-        println(s"❗ Ungültige Eingabe. Bitte Zahl zwischen 0 und ${board.cards.size - 1}.")
+        //println(s"❗ Ungültige Eingabe. Bitte Zahl zwischen 0 und ${board.cards.size - 1}.")
+        gameStatus = GameStatus.InvalidSelection(-1)
+        notifyObservers
         true
 
 
@@ -41,37 +46,42 @@ class Controller(rows: Int, cols: Int) extends Observable:
     val invalid = (nextBoard eq oldBoard) && result.isEmpty
 
     if invalid then
-      println(s"❗ Karte $i kann nicht gewählt werden (bereits offen oder matched).\n")
+      //println(s"❗ Karte $i kann nicht gewählt werden (bereits offen oder matched).\n")
+      gameStatus = GameStatus.InvalidSelection(i)
+      notifyObservers
       return
 
     // Gültige Karte:
     game.board = nextBoard
 
-    result match
 
+    result match
       //erste Karte:
       case None =>
+        gameStatus = GameStatus.SecondCard
         // Erst Board anzeigen
-        notifyObservers()
+        notifyObservers
 
         // Dann Meldung unter Board
-        println()
-        println("zweite Karte wählen...")
-        notifyObservers()
+        //println()
+        //println("zweite Karte wählen...")
+        //notifyObservers()
 
       // Match:
       case Some(true) =>
-        notifyObservers()
-        println("✅ Treffer!\n")
+        gameStatus = GameStatus.Match
+        notifyObservers
+        //println("✅ Treffer!\n")
 
       // Kein Match:
       case Some(false) =>
-        notifyObservers()
-        println("❌ Kein Treffer.\n")
+        gameStatus = GameStatus.NoMatch
+        notifyObservers
+        //println("❌ Kein Treffer.\n")
 
         Thread.sleep(1500)
-        println()
-        println("nächste Runde...\n")
+        //println()
+        //println("nächste Runde...\n")
 
         // Karten zurückdrehen
         val resetBoard = board.copy(
@@ -82,4 +92,5 @@ class Controller(rows: Int, cols: Int) extends Observable:
         )
 
         game.board = resetBoard
-        notifyObservers()
+        gameStatus = GameStatus.NextRound
+        notifyObservers
