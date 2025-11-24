@@ -14,6 +14,9 @@ lazy val root = project
 coverageEnabled := true
 coverageMinimumStmtTotal := 50
 coverageFailOnMinimum := false
+coverageExcludedFiles := """.*/MemorySkalierbar\.scala"""
+
+
 
 //Compile / run / mainClass := Some("MemoryGame")
 //Compile / run / javaOptions += "-Dfile.encoding=UTF-8"
