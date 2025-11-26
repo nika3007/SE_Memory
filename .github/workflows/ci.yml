@@ -41,19 +41,19 @@ jobs:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COVERALLS_FLAG_NAME: Scala
 
-     # NEW: Update README Badge Cachebuster
-      - name: Update README Badge Cachebuster
+      # NEW: Update README Badge Cachebuster
+      - name: Update README badge cachebuster
         run: |
           ts=$(date +%s)
-          sed -i "s/branch=main.*/branch=main\&t=$ts)](https:\/\/coveralls.io\/github\/nika3007\/SE_Memory?branch=main)/" README.md
+          sed -i "s#badge.svg?branch=main[^)]*#badge.svg?branch=main\&t=$ts#g" README.md
 
       # NEW: Auto-commit README update
-      - name: Commit updated README
+      - name: Commit README update
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git add README.md
-          git commit -m "Auto-update coverage badge cachebuster" || echo "No changes to commit"
+          git commit -m "Auto-update coverage badge cachebuster" || echo "No changes"
           git push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
