@@ -8,13 +8,22 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test
-  )
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+  
+    coverageEnabled := true, //Aktiviert die Test-Coverage erst
+    coverageMinimumStmtTotal := 50, //Mindest-Coverage = 50 %
+    coverageFailOnMinimum := false, //build schlägt NICHT fehl auch wenn Mindest-Coverage nicht erreicht wird. meckert nur
+    )
 
+    
+/*
 coverageEnabled := true
 coverageMinimumStmtTotal := 50
 coverageFailOnMinimum := false
 
+// Main-Klasse (Memory.scala) von Coverage ausschließen
+coverageExcludedFiles := ".*Memory.scala"
+*/
 
 
 //Compile / run / mainClass := Some("MemoryGame")

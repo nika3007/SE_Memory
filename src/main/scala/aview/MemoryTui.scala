@@ -9,6 +9,13 @@ class MemoryTui(controller: Controller) extends Observer:
 
   controller.add(this)
 
+  // NEU: Testbare Eingabeverarbeitung wie beim Prof
+  // -----------------------------------------
+  def processInputLine(input: String): Unit =
+    controller.processInput(input)
+  // -----------------------------------------
+
+
   def run(): Unit =
     //Start:
     println(s"🎮 Memory gestartet! (${controller.game.rows} x ${controller.game.cols})\n")
@@ -61,7 +68,7 @@ class MemoryTui(controller: Controller) extends Observer:
         println(boardToString)
         //println()
 
-    //controller.gameStatus = GameStatus.Idle
+    controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true
 
   def boardToString: String =

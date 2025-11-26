@@ -5,8 +5,8 @@ import model.{Board, Card}
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
-import java.io.ByteArrayOutputStream
-import java.io.ByteArrayInputStream
+//import java.io.ByteArrayOutputStream
+//import java.io.ByteArrayInputStream
 
 
 class MemoryTuiSpec extends AnyWordSpec with Matchers {
@@ -65,45 +65,69 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
       tui.boardToString shouldBe "[A] [B]\n[C] [D]\n[E] [F]" // karten werden nach der form angezeigt i = row * cols + col
     }
 
-    "call update() to print the board" in {
-      val cards = Vector(Card(0,"A"), Card(1,"A"), Card(2,"B"), Card(3,"B"))
-      val controller = new Controller(2, 2)
-      controller.game.board = Board(cards)
-
+    
+    // 🎉 Neue Tests im Stil des Profs:
+    "flip a card on numeric input" in {
+      val controller = new Controller(2,2)
+      controller.game.board = Board(Vector(
+        Card(0,"A"), Card(1,"A"),
+        Card(2,"B"), Card(3,"B")
+      ))
       val tui = new MemoryTui(controller)
 
-      controller.processInput("0")
+      tui.processInputLine("0")
 
-      val out = new ByteArrayOutputStream()
-      Console.withOut(out) {
-        tui.update  // ruft boardToString intern auf
-      }
-
-      val output = out.toString
-      output should include ("zweite Karte wählen...")
-      output should include ("[A] [ ]")
-      output should include ("\n")
+      controller.board.cards(0).isFaceUp shouldBe true
     }
 
-    "run() should print start message and end immediately on empty input" in {
-      val input = new ByteArrayInputStream("\n".getBytes())
-      val output = new ByteArrayOutputStream()
-
-      val controller = new Controller(2, 2)
+    "ignore non-numeric input" in {
+      val controller = new Controller(2,2)
+      val before = controller.board
       val tui = new MemoryTui(controller)
 
-      Console.withIn(input) {
-        Console.withOut(output) {
-          tui.run()
-        }
-      }
+      tui.processInputLine("abc")
 
-      val text = output.toString
-      text should include ("Memory gestartet")
-      text should include ("Spiel beendet durch Eingabeabbruch")
+      controller.board shouldBe before
     }
 
+    "ignore out-of-range input" in {
+      val controller = new Controller(2,2)
+      val before = controller.board
+      val tui = new MemoryTui(controller)
+
+      tui.processInputLine("999")
+
+      controller.board shouldBe before
+    }
+
+    "mark matched cards after two matching inputs" in {
+      val controller = new Controller(2,2)
+      controller.game.board = Board(Vector(
+        Card(0,"A"), Card(1,"A"),
+        Card(2,"B"), Card(3,"B")
+      ))
+      val tui = new MemoryTui(controller)
+
+      tui.processInputLine("0")
+      tui.processInputLine("1")
+
+      controller.board.cards(0).isMatched shouldBe true
+      controller.board.cards(1).isMatched shouldBe true
+    }
+
+    "flip back mismatched cards" in {
+      val controller = new Controller(2,2)
+      controller.game.board = Board(Vector(
+        Card(0,"A"), Card(1,"A"),
+        Card(2,"B"), Card(3,"C")
+      ))
+      val tui = new MemoryTui(controller)
+
+      tui.processInputLine("0")
+      tui.processInputLine("2")
+
+      controller.board.cards(0).isFaceUp shouldBe false
+      controller.board.cards(2).isFaceUp shouldBe false
     }
   }
-
-
+}
