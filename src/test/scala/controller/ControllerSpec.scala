@@ -69,7 +69,7 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       after.cards(2).isFaceUp shouldBe false
       after.cards(3).isFaceUp shouldBe false
 
-      // boar hat sich durch das umdrehen einer validen karte verändert --> board soll geupdatet werden un ist nicht wie davor
+      // board hat sich durch das umdrehen einer validen karte verändert --> board soll geupdatet werden und ist nicht wie davor
       after should not be theSameInstanceAs(before)
     }
 
@@ -82,7 +82,7 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       c.processInput("1") shouldBe true // zweite karte aufdecken (auch gültig)
 
       val b2 = c.board
-      b2.cards(0).isMatched shouldBe true // beide karten sind gleich also ein match und merden dementsprechend markiert
+      b2.cards(0).isMatched shouldBe true // beide karten sind gleich also ein match und werden dementsprechend markiert
       b2.cards(1).isMatched shouldBe true
     }
 
@@ -90,7 +90,7 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       val c = freshControllerWithBoard()
 
       // erste karte
-      c.processInput("0") shouldBe true // gültige erste karte wird umgedrehrt und gültige zweite karte auch
+      c.processInput("0") shouldBe true // gültige erste karte wird umgedreht und gültige zweite karte auch
       // zweite karte ist kein match
       c.processInput("2") shouldBe true
 
@@ -99,7 +99,8 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       b3.cards(0).isFaceUp shouldBe false
       b3.cards(2).isFaceUp shouldBe false
     }
-        "set InvalidSelection when the same face-up card is chosen again" in {
+
+    "set InvalidSelection when the same face-up card is chosen again" in {
       val c = freshControllerWithBoard()
 
       // Erste gültige Wahl (flip A)
@@ -111,6 +112,31 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
 
       // Controller soll erkennen: Die Karte ist bereits faceUp
       c.gameStatus shouldBe GameStatus.InvalidSelection(0)
+    }
+
+    "undo and therefore restore the previous board after one move" in {
+    val c = freshControllerWithBoard()
+
+    val original = c.board      // all face down, selection = None
+
+    c.processInput("0") shouldBe true   // one valid move
+    val changed = c.board
+
+    changed should not be original      // board after move
+
+    c.undo()
+    val restored = c.board
+
+    restored shouldBe original          // <- THIS fails
+  }
+
+    "undo on empty history should keep the board unchanged" in {
+      val c = freshControllerWithBoard()
+      val before = c.board
+
+      // wenn spieler bspw am anfang ohne ein safe undo ausführt --> nichts verändern da auch keine speicherdaten vorhanden --> board bleibt gleich !
+      c.undo()
+      c.board shouldBe before
     }
   }
 }

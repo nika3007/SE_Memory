@@ -1,7 +1,6 @@
 package controller
 
-import model.MemoryGame
-import model.Board
+import model.{MemoryGame, Board, GameMemento}
 import util.Observable
 import scala.util.Try
 
@@ -10,14 +9,29 @@ class Controller(rows: Int, cols: Int) extends Observable:
   var game: MemoryGame = MemoryGame(rows, cols)
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
+  // history of executed commands
+  private var history: List[Command] = Nil
+
   def board: Board = game.board
+
+  // central command executor
+  private def execute(cmd: Command): Unit =
+    cmd.doStep()
+    history = cmd :: history
+    notifyObservers
+
+  def undo(): Unit = history match
+    case cmd :: rest =>
+      history = rest
+      cmd.undoStep()
+      notifyObservers
+    case Nil =>
+      println("Nothing to undo")
 
   def processInput(input: String): Boolean =
     // Spiel beenden, wenn Abbruchbedingung
     if input == null || input.trim.isEmpty then
-      //gameStatus = GameStatus.Idle
-      //notifyObservers()
-      //println("Spiel beendet durch Eingabeabbruch. Bye👋")
+
       return false
 
     // Zahl prüfen
@@ -25,20 +39,18 @@ class Controller(rows: Int, cols: Int) extends Observable:
 
     inputOpt match
       case Some(i) if i >= 0 && i < board.cards.size =>
-        handleCardSelection(i)
+        // statt direkt handleCardSelection -> Command Pattern
+        execute(ChooseCardCommand(this, i))
         true
 
       case _ =>
-        //println(s"❗ Ungültige Eingabe. Bitte Zahl zwischen 0 und ${board.cards.size - 1}.")
+
         gameStatus = GameStatus.InvalidSelection(-1)
         notifyObservers
         true
 
-
-
-  // Spiellogik:
-
-  private def handleCardSelection(i: Int): Unit =
+  // Spiellogik – nur EINMAL definiert!
+  private[controller] def handleCardSelection(i: Int): Unit =
     val oldBoard = board
     val (nextBoard, result) = board.choose(i)
 
@@ -46,7 +58,7 @@ class Controller(rows: Int, cols: Int) extends Observable:
     val invalid = (nextBoard eq oldBoard) && result.isEmpty
 
     if invalid then
-      //println(s"❗ Karte $i kann nicht gewählt werden (bereits offen oder matched).\n")
+
       gameStatus = GameStatus.InvalidSelection(i)
       notifyObservers
       return
@@ -56,32 +68,29 @@ class Controller(rows: Int, cols: Int) extends Observable:
 
 
     result match
-      //erste Karte:
+      // erste Karte:
       case None =>
+
         gameStatus = GameStatus.SecondCard
-        // Erst Board anzeigen
+
         notifyObservers
 
-        // Dann Meldung unter Board
-        //println()
-        //println("zweite Karte wählen...")
-        //notifyObservers()
+
 
       // Match:
       case Some(true) =>
         gameStatus = GameStatus.Match
         notifyObservers
-        //println("✅ Treffer!\n")
+
 
       // Kein Match:
       case Some(false) =>
         gameStatus = GameStatus.NoMatch
         notifyObservers
-        //println("❌ Kein Treffer.\n")
+
 
         Thread.sleep(1500)
-        //println()
-        //println("nächste Runde...\n")
+
 
         // Karten zurückdrehen
         val resetBoard = board.copy(
