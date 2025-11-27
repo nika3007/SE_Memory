@@ -18,7 +18,7 @@ class Controller(rows: Int, cols: Int) extends Observable:
   private def execute(cmd: Command): Unit =
     cmd.doStep()
     history = cmd :: history
-    notifyObservers
+    //notifyObservers
 
   def undo(): Unit = history match
     case cmd :: rest =>
