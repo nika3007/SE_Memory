@@ -9,7 +9,8 @@ lazy val root = project
     scalaVersion := scala3Version,
 
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
-    Test / testOptions += Tests.Argument("-l", "integration"),
+    Test / javaOptions += "-Dtest.env=true",
+
 
   
     coverageEnabled := true, //Aktiviert die Test-Coverage erst

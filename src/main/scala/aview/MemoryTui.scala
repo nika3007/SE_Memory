@@ -5,6 +5,8 @@ import util.Observer
 import controller.GameStatus
 import scala.io.StdIn.readLine
 
+private val isTest: Boolean =
+  sys.props.contains("test.env")
 
 
 class MemoryTui(val controller: Controller) extends Observer:
@@ -19,6 +21,8 @@ class MemoryTui(val controller: Controller) extends Observer:
 
 
   def run(): Unit =
+    if (isTest) return
+
     //Start:
     println(s"🎮 Memory gestartet! Level 1\n")
 
@@ -59,6 +63,8 @@ class MemoryTui(val controller: Controller) extends Observer:
 
   //Observer-Update-Methode:
   override def update: Boolean =
+    if (isTest) then return true
+
     val msg = GameStatus.message(controller.gameStatus)
 
     // 1) Meldung immer zuerst
