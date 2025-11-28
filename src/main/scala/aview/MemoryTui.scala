@@ -5,6 +5,8 @@ import util.Observer
 import controller.GameStatus
 import scala.io.StdIn.readLine
 
+
+
 class MemoryTui(val controller: Controller) extends Observer:
 
   controller.add(this)
