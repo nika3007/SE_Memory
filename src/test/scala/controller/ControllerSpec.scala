@@ -1,6 +1,6 @@
 package controller //spec und der eigentliche controller leben in einem package
 
-import model.{Board, Card, MemoryGame}
+import model.{Board, Card, MemoryGame, Level, BoardSizes, Difficulties, ThemeFactory, RandomAI}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -16,7 +16,11 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
     ))
 
   private def freshControllerWithBoard(): Controller = // kleiner privater hilfscontroller zum testen mit fixierten werten
-    val c = new Controller(2, 2)
+    val theme = ThemeFactory.getTheme("fruits")
+    val ai = RandomAI()
+    val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
+    val game = MemoryGame(theme, ai, Vector(level))
+    val c = Controller(game)
     //überschreibe das eigentliche random board hiermit für testzwecke
     c.game.board = smallBoard()
     c

@@ -4,7 +4,7 @@ package model
 case class BoardSize(rows: Int, cols: Int)
 
 object BoardSizes:
-  val Small3x3     = BoardSize(3, 3)
+  val Small3x3     = BoardSize(2, 2)
   val Medium4x4    = BoardSize(4, 4)
   val Large6x6     = BoardSize(6, 6)
   val ExtraLarge8x8 = BoardSize(8, 8)
@@ -16,7 +16,7 @@ case class Difficulty(matchAmount: Int)
 
 object Difficulties:
   val Easy   = Difficulty(2)
-  val Medium = Difficulty(3)
+  //val Medium = Difficulty(3)
   val Hard   = Difficulty(4)
 
 

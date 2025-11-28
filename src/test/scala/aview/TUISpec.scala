@@ -1,7 +1,7 @@
 package aview
 
 import controller.Controller
-import model.{Board, Card}
+import model.{Board, Card, Level, BoardSizes, Difficulties, MemoryGame, ThemeFactory, RandomAI}
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
@@ -11,6 +11,17 @@ import org.scalatest.matchers.should.Matchers
 
 class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
+  // Hilfsfunktion für alten Tests
+  private def testControllerWithBoard(board: Board): Controller =
+    val theme = ThemeFactory.getTheme("fruits")
+    val ai = RandomAI()
+    val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
+    val game = MemoryGame(theme, ai, Vector(level))
+    val c = Controller(game)
+    c.game.board = board
+    c
+
+
   "A Memory Tui" should {
 
     "show all cards face down as [ ]" in { // alle karten werden verdeckt angezeit sobald ein neues board generiert wurde
@@ -18,9 +29,10 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
         Card(0, "A"), Card(1, "A"),
         Card(2, "B"), Card(3, "B")
       )
-      val controller = new Controller(2, 2) // um randomness zu meiden im test
-      controller.game.board = Board(cards)
-      val tui = new MemoryTui(controller)
+
+      val board = Board(cards)  
+
+      val tui = new MemoryTui(testControllerWithBoard(board))
 
       tui.boardToString shouldBe "[ ] [ ]\n[ ] [ ]" // verdeckte karten sehen [ ] so aus
     }
@@ -32,9 +44,9 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
         Card(2, "B", isFaceUp = true),
         Card(3, "B")
       )
-      val controller = new Controller(2, 2)
-      controller.game.board = Board(cards)
-      val tui = new MemoryTui(controller)
+      val board = Board(cards)  
+
+      val tui = new MemoryTui(testControllerWithBoard(board))
 
       tui.boardToString shouldBe "[A] [ ]\n[B] [ ]" // aufgedeckte karten anzeigen
     }
@@ -45,9 +57,9 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
         Card(1, "A", isFaceUp = true, isMatched = true),
         Card(2, "B"), Card(3, "B")
       )
-      val controller = new Controller(2, 2)
-      controller.game.board = Board(cards)
-      val tui = new MemoryTui(controller)
+      val board = Board(cards)
+
+      val tui = new MemoryTui(testControllerWithBoard(board))
 
       tui.boardToString shouldBe "[✅] [✅]\n[ ] [ ]" // match wird mit einem grünen hacken angezeigt
     }
@@ -58,21 +70,22 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
         Card(2,"C",true), Card(3,"D",true),
         Card(4,"E",true), Card(5,"F",true)
       )
-      val controller = new Controller(3, 2)
-      controller.game.board = Board(cards)
-      val tui = new MemoryTui(controller)
+      val board = Board(cards) 
+
+      val tui = new MemoryTui(testControllerWithBoard(board))
 
       tui.boardToString shouldBe "[A] [B]\n[C] [D]\n[E] [F]" // karten werden nach der form angezeigt i = row * cols + col
     }
 
     
-    // 🎉 Neue Tests im Stil des Profs:
+    //Neue Tests im Stil des Profs:
     "flip a card on numeric input" in {
-      val controller = new Controller(2,2)
-      controller.game.board = Board(Vector(
-        Card(0,"A"), Card(1,"A"),
-        Card(2,"B"), Card(3,"B")
-      ))
+      val controller = testControllerWithBoard(
+        Board(Vector(
+          Card(0,"A"), Card(1,"A"),
+          Card(2,"B"), Card(3,"B")
+        ))
+      )
       val tui = new MemoryTui(controller)
 
       tui.processInputLine("0")
@@ -81,7 +94,12 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
     }
 
     "ignore non-numeric input" in {
-      val controller = new Controller(2,2)
+      val controller = testControllerWithBoard(
+        Board(Vector(
+          Card(0,"A"), Card(1,"A"),
+          Card(2,"B"), Card(3,"B")
+        ))
+      )
       val before = controller.board
       val tui = new MemoryTui(controller)
 
@@ -91,7 +109,12 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
     }
 
     "ignore out-of-range input" in {
-      val controller = new Controller(2,2)
+      val controller = testControllerWithBoard(
+        Board(Vector(
+          Card(0,"A"), Card(1,"A"),
+          Card(2,"B"), Card(3,"B")
+        ))
+      )
       val before = controller.board
       val tui = new MemoryTui(controller)
 
@@ -101,11 +124,12 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
     }
 
     "mark matched cards after two matching inputs" in {
-      val controller = new Controller(2,2)
-      controller.game.board = Board(Vector(
-        Card(0,"A"), Card(1,"A"),
-        Card(2,"B"), Card(3,"B")
-      ))
+      val controller = testControllerWithBoard(
+        Board(Vector(
+          Card(0,"A"), Card(1,"A"),
+          Card(2,"B"), Card(3,"B")
+        ))
+      )
       val tui = new MemoryTui(controller)
 
       tui.processInputLine("0")
@@ -116,11 +140,12 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
     }
 
     "flip back mismatched cards" in {
-      val controller = new Controller(2,2)
-      controller.game.board = Board(Vector(
-        Card(0,"A"), Card(1,"A"),
-        Card(2,"B"), Card(3,"C")
-      ))
+      val controller = testControllerWithBoard(
+        Board(Vector(
+          Card(0,"A"), Card(1,"A"),
+          Card(2,"B"), Card(3,"C")
+        ))
+      )
       val tui = new MemoryTui(controller)
 
       tui.processInputLine("0")

@@ -1,18 +1,38 @@
 import aview.MemoryTui
 import controller.Controller
-import model.Card
-import model.Board
-import model.MemoryGame
-
+import model._
 import scala.io.StdIn.readLine
 
+@main def runMemory(): Unit =
+  println("Welcome to Memory!")
+  println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
+  val themeName = readLine().trim()
 
-@main def runMemory(): Unit =    
-    println(s" Welcome to Memory!")
+  // 1) Theme wählen
+  val theme = ThemeFactory.getTheme(themeName)
 
-    val controller = Controller(4, 4)
-    val tui = MemoryTui(controller)
-    tui.run()
+  // 2) KI auswählen
+  val ai = MemoryAI()
+
+  // 3) Levels definieren
+  val levels = Vector(
+    Level(BoardSizes.Small3x3, Difficulties.Easy), //i=0, level1
+    Level(BoardSizes.Small3x3, Difficulties.Hard),
+    Level(BoardSizes.Medium4x4, Difficulties.Easy),
+    Level(BoardSizes.Medium4x4, Difficulties.Hard, 0),
+    Level(BoardSizes.Large6x6, Difficulties.Easy, 0),
+    Level(BoardSizes.Large6x6, Difficulties.Easy, 240),
+  )
+
+  // 4) MemoryGame mit Levelsystem erzeugen
+  val game = MemoryGame(theme, ai, levels)
+
+  // 5) Controller benutzt jetzt MemoryGame
+  val controller = Controller(game)
+
+  // 6) TUI starten
+  val tui = MemoryTui(controller)
+  tui.run()
 
 
 

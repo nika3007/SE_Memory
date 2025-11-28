@@ -4,12 +4,11 @@ import model.{MemoryGame, Board, GameMemento}
 import util.Observable
 import scala.util.Try
 
-class Controller(rows: Int, cols: Int) extends Observable:
+class Controller(val game: MemoryGame) extends Observable:
 
-  var game: MemoryGame = MemoryGame(rows, cols)
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
-  // history of executed commands
+  // history of executed commands, für Undo/Redo (Command Pattern)
   private var history: List[Command] = Nil
 
   def board: Board = game.board
@@ -28,10 +27,10 @@ class Controller(rows: Int, cols: Int) extends Observable:
     case Nil =>
       println("Nothing to undo")
 
+  //User Input Verarbeitung:
   def processInput(input: String): Boolean =
     // Spiel beenden, wenn Abbruchbedingung
     if input == null || input.trim.isEmpty then
-
       return false
 
     // Zahl prüfen
@@ -44,43 +43,37 @@ class Controller(rows: Int, cols: Int) extends Observable:
         true
 
       case _ =>
-
         gameStatus = GameStatus.InvalidSelection(-1)
         notifyObservers
         true
 
-  // Spiellogik – nur EINMAL definiert!
+  // Spiellogik – nur EINMAL definiert!:
   private[controller] def handleCardSelection(i: Int): Unit =
     val oldBoard = board
     val (nextBoard, result) = board.choose(i)
 
-    // Ungültige, wenn schon matched / faceUp / gleiche Karte ---
+    // Ungültige Karte, wenn schon matched / faceUp / gleiche Karte ---
     val invalid = (nextBoard eq oldBoard) && result.isEmpty
-
+    
     if invalid then
-
       gameStatus = GameStatus.InvalidSelection(i)
       notifyObservers
       return
 
-    // Gültige Karte:
+    // Gültige Karte = Board übernehmen:
     game.board = nextBoard
 
 
     result match
       // erste Karte:
       case None =>
-
         gameStatus = GameStatus.SecondCard
         notifyObservers
-
-
 
       // Match:
       case Some(true) =>
         gameStatus = GameStatus.Match
         notifyObservers
-
 
       // Kein Match:
       case Some(false) =>

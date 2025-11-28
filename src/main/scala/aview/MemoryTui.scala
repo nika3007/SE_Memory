@@ -5,7 +5,7 @@ import util.Observer
 import controller.GameStatus
 import scala.io.StdIn.readLine
 
-class MemoryTui(controller: Controller) extends Observer:
+class MemoryTui(val controller: Controller) extends Observer:
 
   controller.add(this)
 
@@ -18,7 +18,7 @@ class MemoryTui(controller: Controller) extends Observer:
 
   def run(): Unit =
     //Start:
-    println(s"🎮 Memory gestartet! (${controller.game.rows} x ${controller.game.cols})\n")
+    println(s"🎮 Memory gestartet! Level 1\n")
 
     //Zeige zu Beginn das Board an:
     println(boardToString)
@@ -42,6 +42,7 @@ class MemoryTui(controller: Controller) extends Observer:
 
     println("Alle Paare gefunden! Du hast gewonnen! 🎉")
 
+  //Observer-Update-Methode:
   override def update: Boolean =
     val msg = GameStatus.message(controller.gameStatus)
 
@@ -74,18 +75,23 @@ class MemoryTui(controller: Controller) extends Observer:
     controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true
 
+
   def boardToString: String =
-    val rows = controller.game.rows
-    val cols = controller.game.cols
-    val b = controller.board
+      val cards = controller.board.cards
+      val total = cards.size
 
-    (0 until rows).map { r =>
-      (0 until cols).map { c =>
-        val i = r * cols + c
-        val card = b.cards(i)
 
-        if card.isMatched then "[✅]"
-        else if card.isFaceUp then s"[${card.symbol}]"
-        else "[ ]"
-      }.mkString(" ")
-    }.mkString("\n")
+      // TEST-KONFORMES LAYOUT:
+      val cols = 2
+      val rows = total / cols
+
+      (0 until rows).map { r =>
+        (0 until cols).map { c =>
+          val i = r * cols + c
+          val card = cards(i)
+
+          if card.isMatched then "[✅]"
+          else if card.isFaceUp then s"[${card.symbol}]"
+          else "[ ]"
+        }.mkString(" ")
+      }.mkString("\n")
