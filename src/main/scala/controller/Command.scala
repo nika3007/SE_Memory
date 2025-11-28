@@ -2,21 +2,21 @@ package controller
 
 import model.{GameMemento, MemoryGame}
 
-/** Base command trait */
+// command eigenschaften
 trait Command:
   def doStep(): Unit
   def undoStep(): Unit
 
-/** One concrete command: choosing a card */
+// wähle karte --> veränderung "Basis" der do bzw undo
 final class ChooseCardCommand(controller: Controller, index: Int) extends Command:
 
-  // snapshot of game *before* the move
+  // merke das board bevor irgendwas gemacht wird
   private val before: GameMemento = controller.game.save()
 
   override def doStep(): Unit =
-    // use the controller's card handling (must be visible: private[controller])
+    // cardHandler wird benutzt damit ein "do" passieren kann
     controller.handleCardSelection(index)
 
   override def undoStep(): Unit =
-    // restore previous board state
+    // weiederherstellung vom vorherigen zustand des boards
     controller.game.restore(before)

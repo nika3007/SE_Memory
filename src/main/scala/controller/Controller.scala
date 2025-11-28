@@ -8,12 +8,12 @@ class Controller(val game: MemoryGame) extends Observable:
 
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
-  // history of executed commands, für Undo/Redo (Command Pattern)
+  // history von ausgeführten commands für undo & redo
   private var history: List[Command] = Nil
 
   def board: Board = game.board
 
-  // central command executor
+  // führt commands hauptsächlich aus
   private def execute(cmd: Command): Unit =
     cmd.doStep()
     history = cmd :: history
@@ -54,7 +54,7 @@ class Controller(val game: MemoryGame) extends Observable:
 
     // Ungültige Karte, wenn schon matched / faceUp / gleiche Karte ---
     val invalid = (nextBoard eq oldBoard) && result.isEmpty
-    
+
     if invalid then
       gameStatus = GameStatus.InvalidSelection(i)
       notifyObservers
