@@ -21,13 +21,16 @@ class MemoryTui(controller: Controller) extends Observer:
     println(s"🎮 Memory gestartet! (${controller.game.rows} x ${controller.game.cols})\n")
 
     //Zeige zu Beginn das Board an:
-    controller.notifyObservers
+    println(boardToString)
+    //println()
 
     while (!controller.board.allMatched) do
       println()
       println(s"Wähle eine Karte (0 bis ${controller.board.cards.size - 1}):")
+
       val input = readLine()
       println()
+      
       val continue = controller.processInput(input)
       
 

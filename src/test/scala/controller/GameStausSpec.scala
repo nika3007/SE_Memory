@@ -39,4 +39,3 @@ final class GameStatusSpec extends AnyWordSpec with Matchers {
     }
   }
 }
-

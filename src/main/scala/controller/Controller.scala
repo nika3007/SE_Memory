@@ -72,7 +72,6 @@ class Controller(rows: Int, cols: Int) extends Observable:
       case None =>
 
         gameStatus = GameStatus.SecondCard
-
         notifyObservers
 
 
