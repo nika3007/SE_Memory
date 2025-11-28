@@ -10,34 +10,25 @@ trait AIPlayer:
 
 //implementierung- MemoryAI:------------------------
 class MemoryAI extends AIPlayer:
-
-  private var memory : Map[String, Int] = Map()
+  
+  private var lastSeen: Option[Int] = None
 
   override def chooseCard(board: Board): Int =
     val hidden =
       board.cards.filter(c => !c.isFaceUp && !c.isMatched)
 
     // 1) Versuche, ein Symbol zu finden, das wir bereits gesehen haben
-    val knownMatch: Option[Int] =
-      hidden.collectFirst {
-        case card if memory.contains(card.symbol) =>
-          val id = memory(card.symbol)
-          memory -= card.symbol
-          id
-      }
-
-    knownMatch match
-      case Some(cardId) => 
-        cardId
-
+    lastSeen match
+      case Some(savedId) =>
+        lastSeen = None
+        // Finde irgendeine versteckte Karte, die NICHT dieselbe ID hat
+        hidden.find(_.id != savedId).get.id
+        
       case None =>
-        // nichts gefunden → Karte merken
-        hidden.foreach(card =>
-          memory += (card.symbol -> card.id)
-        )
-
-        // und zufällig spielen
-        hidden(scala.util.Random.nextInt(hidden.size)).id
+        // --- 2. Merke diese Karte für später ---
+        val choice = hidden.head.id    // deterministisch
+        lastSeen = Some(choice)
+        choice
 
 
 
