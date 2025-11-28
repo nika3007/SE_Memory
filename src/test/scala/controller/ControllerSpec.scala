@@ -121,16 +121,23 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
     }
 
   
-    "undo and therefore restore the previous board after one move" in {
+    "undo and restore the previous board after one move" in {
       val c = freshControllerWithBoard()
+      val original = c.game.save()
 
-      val original = c.game.save()    // <- MEMENTO speichern
-
-      c.processInput("0") shouldBe true
-
+      c.processInput("0")
       c.undo()
 
-      // Jetzt das Board mit dem gespeicherten Memento vergleichen
+      c.board shouldBe original.board
+    }
+
+    "processInput(\"u\") should trigger undo" in {
+      val c = freshControllerWithBoard()
+      val original = c.game.save()
+
+      c.processInput("0")
+      c.processInput("u")
+
       c.board shouldBe original.board
     }
 
@@ -138,7 +145,6 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       val c = freshControllerWithBoard()
       val before = c.board
 
-      // wenn spieler bspw am anfang ohne ein safe undo ausführt --> nichts verändern da auch keine speicherdaten vorhanden --> board bleibt gleich !
       c.undo()
       c.board shouldBe before
     }
