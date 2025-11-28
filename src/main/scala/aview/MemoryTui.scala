@@ -40,12 +40,13 @@ class MemoryTui(val controller: Controller) extends Observer:
 
         val input = readLine()
         println()
-        
+
+
         val continue = controller.processInput(input)
-        
+
 
         //Abbruch:
-        if !continue then 
+        if !continue then
           println("Spiel beendet durch Eingabeabbruch. Bye👋")
           println()
           return   // <<< HARTE ABBRUCH-KONTROLLE
