@@ -2,7 +2,7 @@ package model
 import scala.util.Random
 
 
-//Strategy Interface:---------------------------
+//Strategy Interface:---
 trait AIPlayer:
   def chooseCard(board: Board): Int
 
@@ -11,13 +11,13 @@ trait AIPlayer:
 //implementierung- MemoryAI:------------------------
 class MemoryAI extends AIPlayer:
 
-  private var memory = Map[String, Int]()
+  private var memory : Map[String, Int] = Map()
 
   override def chooseCard(board: Board): Int =
     val hidden =
       board.cards.filter(c => !c.isFaceUp && !c.isMatched)
 
-    // 1) Wenn Symbol bekannt → gezielt spielen
+    // 1) Versuche, ein Symbol zu finden, das wir bereits gesehen haben
     val knownMatch: Option[Int] =
       hidden.collectFirst {
         case card if memory.contains(card.symbol) =>
@@ -41,7 +41,7 @@ class MemoryAI extends AIPlayer:
 
 
 
-//implementierung- RandomAI:-----------------------------
+//implementierung- RandomAI:---
 class RandomAI extends AIPlayer:
   override def chooseCard(board: Board): Int =
     val hidden =
