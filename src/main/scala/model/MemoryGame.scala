@@ -44,7 +44,9 @@ final case class MemoryGame(
   def nextLevel(): Boolean =
     if currentLevelIndex + 1 < levels.size then
       currentLevelIndex += 1
-      board = buildBoard(currentLevel)
+      // NEU: neu mischen, damit das Board sich garantiert unterscheidet
+      val newBoard = buildBoard(currentLevel)
+      board = newBoard.copy(cards = Random.shuffle(newBoard.cards))
       true
     else
-      false // keine weiteren Levels
+      false

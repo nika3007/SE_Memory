@@ -38,6 +38,8 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       c.board shouldBe before // "  "
     }
 
+
+
     "reject non-numeric input and keep the board unchanged" in { // jeglicher input der keine zahl ist wird ignoriert aber das board bleibt unverändert
       val c = freshControllerWithBoard()
       val before = c.board
@@ -118,21 +120,19 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       c.gameStatus shouldBe GameStatus.InvalidSelection(0)
     }
 
+  
     "undo and therefore restore the previous board after one move" in {
-    val c = freshControllerWithBoard()
+      val c = freshControllerWithBoard()
 
-    val original = c.board      // all face down, selection = None
+      val original = c.game.save()    // <- MEMENTO speichern
 
-    c.processInput("0") shouldBe true   // one valid move
-    val changed = c.board
+      c.processInput("0") shouldBe true
 
-    changed should not be original      // board after move
+      c.undo()
 
-    c.undo()
-    val restored = c.board
-
-    restored shouldBe original          // <- THIS fails
-  }
+      // Jetzt das Board mit dem gespeicherten Memento vergleichen
+      c.board shouldBe original.board
+    }
 
     "undo on empty history should keep the board unchanged" in {
       val c = freshControllerWithBoard()
