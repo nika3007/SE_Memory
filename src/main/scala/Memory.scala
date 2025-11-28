@@ -16,8 +16,8 @@ import scala.io.StdIn.readLine
 
   // 3) Levels definieren
   val levels = Vector(
-    Level(BoardSizes.Small3x3, Difficulties.Easy), //i=0, level1
-    Level(BoardSizes.Small3x3, Difficulties.Hard),
+    Level(BoardSizes.Small2x2, Difficulties.Easy), //i=0, level1
+    //Level(BoardSizes.Small2x2, Difficulties.Hard),
     Level(BoardSizes.Medium4x4, Difficulties.Easy),
     Level(BoardSizes.Medium4x4, Difficulties.Hard, 0),
     Level(BoardSizes.Large6x6, Difficulties.Easy, 0),
