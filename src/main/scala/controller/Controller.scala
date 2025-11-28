@@ -33,6 +33,12 @@ class Controller(val game: MemoryGame) extends Observable:
     if input == null || input.trim.isEmpty then
       return false
 
+    // ➜ NEU: Undo-Befehl
+    if input.trim.toLowerCase == "u" then
+      undo()
+      return true
+      
+
     // Zahl prüfen
     val inputOpt = Try(input.toInt).toOption
 
