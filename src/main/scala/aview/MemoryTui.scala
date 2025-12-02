@@ -5,6 +5,7 @@ import util.Observer
 import controller.GameStatus
 import scala.io.StdIn.readLine
 
+
 private val isTest: Boolean =
   sys.props.contains("test.env")
 

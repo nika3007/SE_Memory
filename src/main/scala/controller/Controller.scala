@@ -1,6 +1,7 @@
 package controller
 
 import model.{MemoryGame, Board, GameMemento}
+import scala.util.{Try, Success, Failure}
 import util.Observable
 import scala.util.Try
 
@@ -9,7 +10,7 @@ class Controller(val game: MemoryGame) extends Observable:
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
   // history von ausgeführten commands für undo & redo
-  private var history: List[Command] = Nil
+  private var history: List[Command] = Nil // try-monad hinzufügen
 
   def board: Board = game.board
 
@@ -37,7 +38,7 @@ class Controller(val game: MemoryGame) extends Observable:
     if input.trim.toLowerCase == "u" then
       undo()
       return true
-      
+
 
     // Zahl prüfen
     val inputOpt = Try(input.toInt).toOption

@@ -12,13 +12,14 @@ lazy val root = project
     Test / javaOptions += "-Dtest.env=true",
 
 
-  
+
     coverageEnabled := true, //Aktiviert die Test-Coverage erst
     coverageMinimumStmtTotal := 50, //Mindest-Coverage = 50 %
     coverageFailOnMinimum := false, //build schlägt NICHT fehl auch wenn Mindest-Coverage nicht erreicht wird. meckert nur
     )
 
-    
+
+
 /*
 coverageEnabled := true
 coverageMinimumStmtTotal := 50

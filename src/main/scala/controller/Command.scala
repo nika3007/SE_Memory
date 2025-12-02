@@ -1,22 +1,29 @@
 package controller
 
 import model.{GameMemento, MemoryGame}
+import scala.util.{Try, Success, Failure}
 
 // command eigenschaften
 trait Command:
-  def doStep(): Unit
-  def undoStep(): Unit
+  def doStep(): Try[Unit]
+  def undoStep(): Try[Unit]
 
-// wähle karte --> veränderung "Basis" der do bzw undo
+// wähle karte --> veränderung base von do bzw undo
 final class ChooseCardCommand(controller: Controller, index: Int) extends Command:
 
   // merke das board bevor irgendwas gemacht wird
-  private val before: GameMemento = controller.game.save()
+  private val beforeTry: Try[GameMemento] = Try(controller.game.save())
 
-  override def doStep(): Unit =
+  override def doStep(): Try[Unit] =
     // cardHandler wird benutzt damit ein "do" passieren kann
-    controller.handleCardSelection(index)
+    for
+      _ <- beforeTry                               // speicherzustand erfolgreich vorhanden?
+      _ <- Try(controller.handleCardSelection(index))
+    yield ()
 
-  override def undoStep(): Unit =
+  override def undoStep(): Try[Unit] =
     // weiederherstellung vom vorherigen zustand des boards
-    controller.game.restore(before)
+    for
+      before <- beforeTry
+      _ <- Try(controller.game.restore(before))
+    yield ()
