@@ -1,6 +1,6 @@
 package controller
 
-import model.{MemoryGame, Board, GameMemento}
+import model.{MemoryGame, Board, GameMemento, NoAI}
 import scala.util.{Try, Success, Failure}
 import util.Observable
 import scala.util.Try
@@ -9,17 +9,25 @@ class Controller(val game: MemoryGame) extends Observable:
 
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 
+  // Wer ist dran ("human" / "ai")
+  var currentPlayer: String = "human"
+
+  // NEU — Ai aktiv?
+  def aiEnabled: Boolean =
+    !game.ai.isInstanceOf[NoAI]
+
   // history von ausgeführten commands für undo & redo
   private var history: List[Command] = Nil // try-monad hinzufügen
 
   def board: Board = game.board
 
-  // führt commands hauptsächlich aus
+  // führt commands hauptsächlich aus-----------------------------
   private def execute(cmd: Command): Unit =
     cmd.doStep()
     history = cmd :: history
     //notifyObservers
 
+  // undo ----------------------------------------------------------
   def undo(): Unit = history match
     case cmd :: rest =>
       history = rest
@@ -28,17 +36,20 @@ class Controller(val game: MemoryGame) extends Observable:
     case Nil =>
       println("Nothing to undo")
 
-  //User Input Verarbeitung:
+  //Mensch Input Verarbeitung:------------------------------------------
   def processInput(input: String): Boolean =
     // Spiel beenden, wenn Abbruchbedingung
     if input == null || input.trim.isEmpty then
       return false
 
+    // Wenn AI dran ist → Spieler ignorieren
+    if currentPlayer == "ai" then
+      return true
+
     // ➜ NEU: Undo-Befehl
     if input.trim.toLowerCase == "u" then
       undo()
       return true
-
 
     // Zahl prüfen
     val inputOpt = Try(input.toInt).toOption
@@ -54,7 +65,28 @@ class Controller(val game: MemoryGame) extends Observable:
         notifyObservers
         true
 
-  // Spiellogik – nur EINMAL definiert!:
+
+  // AI (immer 2 Karten)----------------------------------------
+  def aiTurnFirst(): Unit =
+    if currentPlayer != "ai" then return
+
+    val first = game.ai.chooseCard(board)
+
+    //gameStatus = GameStatus.FirstCard
+    execute(ChooseCardCommand(this, first))
+    //notifyObservers
+
+  def aiTurnSecond(): Unit =
+    if currentPlayer != "ai" then return
+
+    val second = game.ai.chooseCard(board)
+
+    //gameStatus = GameStatus.SecondCard
+    execute(ChooseCardCommand(this, second))
+    //notifyObservers
+      
+
+  // Spiellogik – nur EINMAL definiert!:-------------------------------------
   private[controller] def handleCardSelection(i: Int): Unit =
     val oldBoard = board
     val (nextBoard, result) = board.choose(i)
@@ -74,13 +106,16 @@ class Controller(val game: MemoryGame) extends Observable:
     result match
       // erste Karte:
       case None =>
-        gameStatus = GameStatus.SecondCard
+        gameStatus = GameStatus.FirstCard
         notifyObservers
 
       // Match:
       case Some(true) =>
         gameStatus = GameStatus.Match
         notifyObservers
+
+        // FIX: Spieler bleibt dran
+        currentPlayer = currentPlayer
 
       // Kein Match:
       case Some(false) =>
@@ -101,4 +136,12 @@ class Controller(val game: MemoryGame) extends Observable:
 
         game.board = resetBoard
         gameStatus = GameStatus.NextRound
+
+        // Wenn AI deaktiviert → Spieler bleibt IMMER human
+        currentPlayer =
+          game.ai match
+            case _: NoAI => "human"
+            case _ =>
+              if currentPlayer == "human" then "ai" else "human"
+
         notifyObservers

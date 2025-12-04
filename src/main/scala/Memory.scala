@@ -4,15 +4,26 @@ import model._
 import scala.io.StdIn.readLine
 
 @main def runMemory(): Unit =
+  println()
   println("Welcome to Memory!")
+
   println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
   val themeName = readLine().trim()
+  
+  println("Choose AI level: none / easy / medium / hard / pro")
+  val aiChoice = readLine().trim.toLowerCase
 
   // 1) Theme wählen
   val theme = ThemeFactory.getTheme(themeName)
 
   // 2) KI auswählen
-  val ai = MemoryAI()
+  val ai: AIPlayer = aiChoice match
+    case "none"   => NoAI()
+    case "easy"   => RandomAI()
+    case "medium" => MediumAI()
+    case "hard"   => HardAI()
+    case "pro"    => MemoryAI()   
+    case _        => RandomAI()
 
   // 3) Levels definieren
   val levels = Vector(
@@ -27,7 +38,7 @@ import scala.io.StdIn.readLine
   // 4) MemoryGame mit Levelsystem erzeugen
   val game = MemoryGame(theme, ai, levels)
 
-  // 5) Controller benutzt jetzt MemoryGame
+  // 5) Controller erzeugen
   val controller = Controller(game)
 
   // 6) TUI starten

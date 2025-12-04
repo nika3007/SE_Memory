@@ -25,42 +25,109 @@ class MemoryTui(val controller: Controller) extends Observer:
     if (isTest) return
 
     //Start:
+    println()  
     println(s"🎮 Memory gestartet! Level 1\n")
+    //println("👉 Du bist dran!")
+    //println(boardToString)
+    //println()
+
+    var levelJustStarted = false   // >>> FIX 2
 
     var playing = true
 
     while playing do
 
       //Zeige zu Beginn das Board an:
-      println(boardToString)
+      //println(boardToString)
       //println()
 
       while (!controller.board.allMatched) do
-        println()
-        println(s"Wähle eine Karte (0 bis ${controller.board.cards.size - 1}):")
+        //println()
 
-        val input = readLine()
-        println()
+        // --- HUMAN TURN -------------------------------------------------
+        if controller.currentPlayer == "human" then
+
+          if controller.gameStatus == GameStatus.Idle
+              || controller.gameStatus == GameStatus.NextRound then
+              //|| controller.gameStatus == GameStatus.Match then
+              // Wer beginnt das neue Level?
+              println("👉 Du bist dran!")
+              println(boardToString)
+              println()
+
+          // Erste Karte?
+          if controller.gameStatus == GameStatus.Idle
+            || controller.gameStatus == GameStatus.NextRound 
+            || controller.gameStatus == GameStatus.Match then
+            println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
+
+          // Zweite Karte?
+          else if controller.gameStatus == GameStatus.FirstCard then
+            println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
 
 
-        val continue = controller.processInput(input)
-
-
-        //Abbruch:
-        if !continue then
-          println("Spiel beendet durch Eingabeabbruch. Bye👋")
+          val input = readLine()
           println()
-          return   // <<< HARTE ABBRUCH-KONTROLLE
 
-      // LEVEL abgeschlossen →
+          val continue = controller.processInput(input)
+          if !continue then
+            println("Spiel beendet durch Eingabeabbruch. Bye👋")
+            println()
+            return
+
+        // --- AI TURN ----------------------------------------------------
+        else if controller.aiEnabled then
+
+          // >>> FIX 2: Kein "AI ist dran!" direkt nach Levelstart
+          if !levelJustStarted then
+            println("🤖 AI ist dran!")
+            println(boardToString)
+            println()
+
+
+          Thread.sleep(1000)
+          println("🤖 AI wählt erste Karte...")
+          controller.aiTurnFirst()       
+          Thread.sleep(1500)
+
+          // zweite Karte kommt NACH observer update
+          println("🤖 AI wählt zweite Karte... bitte warten!")
+          println()
+          controller.aiTurnSecond()         
+          Thread.sleep(1000)
+
+          // >>> FIX 2: Nach dem ersten AI-Zug im neuen Level wieder normal drucken
+          levelJustStarted = false
+
+
+      // --- LEVEL DONE -> next Level ---------------------------------------------------
       if controller.game.nextLevel() then
-        val next = controller.game.levels.indexOf(controller.game.currentLevel) + 1
-        println(s"🎉 Level abgeschlossen! Starte Level $next ...\n")
+        levelJustStarted = true 
+        val lvl = controller.game.levels.indexOf(controller.game.currentLevel) + 1
+        println()
+        println(s"🎉 Level abgeschlossen! Starte Level $lvl ...\n")
+
+        // Wer startet dieses Level?
+        if controller.currentPlayer == "human" then
+          println("👉 Du bist dran!")
+        else
+          println("🤖 AI startet dieses Level!")
+
+        println(boardToString)
+        println()
 
       else
-        // KEIN weiteres Level → fertig!
+        // game over
         playing = false
-        println("🎉 Alle Levels abgeschlossen! Du hast das ganze Spiel gewonnen! 🎉")
+        println()  
+
+        if controller.currentPlayer == "human" then
+          println("🎉 Du hast das ganze Spiel gewonnen! 🎉")
+          println()
+        else
+          println("🤖 Die AI hat das ganze Spiel gewonnen! 🎉")
+          
+        println()
 
 
   //Observer-Update-Methode:
@@ -76,26 +143,32 @@ class MemoryTui(val controller: Controller) extends Observer:
 
     // 2) Bei FirstCard und NextRound das Board NACH der Meldung
     controller.gameStatus match
+      case GameStatus.FirstCard =>
+        println(boardToString)
+        println()
+
       case GameStatus.SecondCard =>
         println(boardToString)
-        //println()
-      case GameStatus.NextRound =>
-        println(boardToString)
-        //println()
+
       case GameStatus.Match =>
         println(boardToString)
-        //println()
+        println()
+
       case GameStatus.NoMatch =>
         println(boardToString)
         println()
-      case GameStatus.InvalidSelection(i) =>
-        println(boardToString)
-        //println()
-      case GameStatus.Idle =>
-        println(boardToString)
-        //println()
 
-    controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
+      case GameStatus.NextRound => 
+        println()
+        //println(boardToString)
+
+      case GameStatus.InvalidSelection(_) =>
+        println(boardToString)
+
+      case GameStatus.Idle =>
+        () // nichts drucken
+
+    //controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true
 
 
