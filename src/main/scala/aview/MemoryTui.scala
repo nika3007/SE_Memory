@@ -3,6 +3,7 @@ package aview
 import controller.Controller
 import util.Observer
 import controller.GameStatus
+import util.HintSystem
 import scala.io.StdIn.readLine
 
 
@@ -14,11 +15,9 @@ class MemoryTui(val controller: Controller) extends Observer:
 
   controller.add(this)
 
-  // NEU: Testbare Eingabeverarbeitung wie beim Prof
-  // -----------------------------------------
+  //Testbare Eingabeverarbeitung wie beim Prof
   def processInputLine(input: String): Unit =
     controller.processInput(input)
-  // -----------------------------------------
 
 
   def run(): Unit =
@@ -42,8 +41,24 @@ class MemoryTui(val controller: Controller) extends Observer:
         val input = readLine()
         println()
 
+        var continue = true
+        
 
-        val continue = controller.processInput(input)
+        //HINT SYSTEM --------------------------------------------------
+        if input.trim.toLowerCase == "hint" then
+          HintSystem.getHint(controller.board) match
+            case Some((a, b)) =>
+              println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!")
+            case None =>
+              println("💡 Kein sicheres Paar bekannt.")
+          println(boardToString)
+          println()
+          
+          // NICHT als Spielzug werten → also weiter zur nächsten Runde:
+          continue = true
+        else
+          // Normale Eingabe verarbeiten
+          continue = controller.processInput(input)
 
 
         //Abbruch:
@@ -51,6 +66,7 @@ class MemoryTui(val controller: Controller) extends Observer:
           println("Spiel beendet durch Eingabeabbruch. Bye👋")
           println()
           return   // <<< HARTE ABBRUCH-KONTROLLE
+
 
       // LEVEL abgeschlossen →
       if controller.game.nextLevel() then

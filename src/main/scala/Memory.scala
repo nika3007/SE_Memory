@@ -6,6 +6,7 @@ import scala.io.StdIn.readLine
 @main def runMemory(): Unit =
   println("Welcome to Memory!")
   println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
+  
   val themeName = readLine().trim()
 
   // 1) Theme wählen
