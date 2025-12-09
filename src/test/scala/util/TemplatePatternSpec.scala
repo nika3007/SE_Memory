@@ -47,5 +47,23 @@ class AsciiRendererSpec extends AnyWordSpec with Matchers {
       val out = AsciiRenderer().render(Board(cards))
       out shouldBe "[A] [B] [C]\n[D] [E] [F]"
     }
+
+    "should render placeholder cells when grid is larger than the number of cards" in {
+      val cards = Vector(
+        Card(0,"A"), Card(1,"B"), Card(2,"C"), Card(3,"D")
+        // 4 Karten → sqrt(4)=2 → normalerweise 2×2 → KEIN else-Zweig!
+      )
+
+      // HACK: Wir faken einen "Level", indem wir computeGrid überschreiben:
+      val renderer = new AsciiRenderer {
+        override protected def computeGrid(board: Board) = (3, 3) // zwingt 3×3 Grid
+      }
+
+      val board = Board(cards)
+      val out = renderer.render(board)
+
+      out should include ("   ")   // placeholder Zelle, ELSE wurde ausgeführt
+    }
+
   }
 }
