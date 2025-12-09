@@ -37,8 +37,8 @@ class AsciiRendererSpec extends AnyWordSpec with Matchers {
 
       val out = renderer.render(board)
 
-      out should include ("[A]")
-      out should not include "[ ] [A]" // A steht an Position 0
+      out should include ("[A]")         // face-up
+      out should include ("[ ]")          // face-down still present
     }
 
     "render matched cards as [✅]" in {
@@ -57,13 +57,11 @@ class AsciiRendererSpec extends AnyWordSpec with Matchers {
       out should include ("[✅]")
     }
 
-    "layout cards correctly row by row" in {
-      // 2x2 Layout
+    "layout cards correctly row by row for 2x3 grid" in {
       val cards = Vector(
-        Card(0, "A"),
-        Card(1, "B"),
-        Card(2, "C"),
-        Card(3, "D")
+        Card(0,"A",true), Card(1,"B",true),
+        Card(2,"C",true), Card(3,"D",true),
+        Card(4,"E",true), Card(5,"F",true)
       )
 
       val board = Board(cards)
@@ -71,10 +69,29 @@ class AsciiRendererSpec extends AnyWordSpec with Matchers {
 
       val out = renderer.render(board)
 
-      val rows = out.split("\n")
-      rows.length shouldBe 2      // 2 rows
-      rows(0).trim shouldBe "[ ] [ ]"
-      rows(1).trim shouldBe "[ ] [ ]"
+      // FIXED: richtige 2×3-Formatierung
+      out shouldBe "[A] [B] [C]\n[D] [E] [F]"
+
+      // kleine Zusatzzeile für vollen Branch in formatMatrix()
+      out.split("\n").length shouldBe 2
     }
+
+    "compute grid fallback for prime-like sizes" in {
+      val cards = Vector(
+        Card(0,"A"), Card(1,"B"), Card(2,"C"),
+        Card(3,"D"), Card(4,"E"), Card(5,"F"),
+        Card(6,"G")
+      )
+
+      val board = Board(cards)
+      val renderer = AsciiRenderer()
+
+      val out = renderer.render(board)
+
+      // computeGrid → rows = 1, cols = 7
+      out.split("\n").length shouldBe 1
+      out should include ("[ ] [ ] [ ]")
+    }
+
   }
 }

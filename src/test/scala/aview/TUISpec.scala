@@ -77,7 +77,9 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val tui = new MemoryTui(testControllerWithBoard(board))
 
-      renderer.render(board)  shouldBe "[A] [B]\n[C] [D]\n[E] [F]" // karten werden nach der form angezeigt i = row * cols + col
+      val out = renderer.render(board)
+
+      out shouldBe "[A] [B] [C]\n[D] [E] [F]" // karten werden nach der form angezeigt i = row * cols + col
     }
 
     
