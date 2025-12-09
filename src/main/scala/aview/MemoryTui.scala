@@ -5,6 +5,8 @@ import util.Observer
 import controller.GameStatus
 import util.HintSystem
 import scala.io.StdIn.readLine
+import util.{AsciiRenderer, BoardRenderer}
+
 
 
 private val isTest: Boolean =
@@ -14,6 +16,9 @@ private val isTest: Boolean =
 class MemoryTui(val controller: Controller) extends Observer:
 
   controller.add(this)
+
+  //neu templete Rendere:
+  private val renderer: BoardRenderer = AsciiRenderer()
 
   //Testbare Eingabeverarbeitung wie beim Prof
   def processInputLine(input: String): Unit =
@@ -31,7 +36,9 @@ class MemoryTui(val controller: Controller) extends Observer:
     while playing do
 
       //Zeige zu Beginn das Board an:
-      println(boardToString)
+      //println(boardToString) ->neu zu: 
+      println(renderer.render(controller.board))
+
       //println()
 
       while (!controller.board.allMatched) do
@@ -51,7 +58,8 @@ class MemoryTui(val controller: Controller) extends Observer:
               println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!")
             case None =>
               println("💡 Kein sicheres Paar bekannt.")
-          println(boardToString)
+          //println(boardToString)
+          println(renderer.render(controller.board))
           println()
           
           // NICHT als Spielzug werten → also weiter zur nächsten Runde:
@@ -93,28 +101,34 @@ class MemoryTui(val controller: Controller) extends Observer:
     // 2) Bei FirstCard und NextRound das Board NACH der Meldung
     controller.gameStatus match
       case GameStatus.SecondCard =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         //println()
       case GameStatus.NextRound =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         //println()
       case GameStatus.Match =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         //println()
       case GameStatus.NoMatch =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         println()
       case GameStatus.InvalidSelection(i) =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         //println()
       case GameStatus.Idle =>
-        println(boardToString)
+        //println(boardToString)
+        println(renderer.render(controller.board))
         //println()
 
     controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true
 
-
+  /* wird ersetzt durch renderer
   def boardToString: String =
     val cards = controller.board.cards
     val total = cards.size
@@ -141,3 +155,4 @@ class MemoryTui(val controller: Controller) extends Observer:
         else "[ ]"
       }.mkString(" ")
     }.mkString("\n")
+    */

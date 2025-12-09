@@ -1,5 +1,6 @@
 package aview
 
+import util.{AsciiRenderer, BoardRenderer}
 import controller.Controller
 import model.{Board, Card, Level, BoardSizes, Difficulties, MemoryGame, ThemeFactory, RandomAI}
 
@@ -10,6 +11,8 @@ import org.scalatest.matchers.should.Matchers
 
 
 class MemoryTuiSpec extends AnyWordSpec with Matchers {
+
+  private val renderer = AsciiRenderer()
 
   // Hilfsfunktion für alten Tests
   private def testControllerWithBoard(board: Board): Controller =
@@ -34,7 +37,7 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val tui = new MemoryTui(testControllerWithBoard(board))
 
-      tui.boardToString shouldBe "[ ] [ ]\n[ ] [ ]" // verdeckte karten sehen [ ] so aus
+      renderer.render(board)  shouldBe "[ ] [ ]\n[ ] [ ]" // verdeckte karten sehen [ ] so aus
     }
 
     "show symbols for face-up cards" in { // symbole werden angezeigt sobald die karten umgedreht werden
@@ -48,7 +51,7 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val tui = new MemoryTui(testControllerWithBoard(board))
 
-      tui.boardToString shouldBe "[A] [ ]\n[B] [ ]" // aufgedeckte karten anzeigen
+      renderer.render(board)  shouldBe "[A] [ ]\n[B] [ ]" // aufgedeckte karten anzeigen
     }
 
     "show matched cards as [✅]" in {
@@ -61,7 +64,7 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val tui = new MemoryTui(testControllerWithBoard(board))
 
-      tui.boardToString shouldBe "[✅] [✅]\n[ ] [ ]" // match wird mit einem grünen hacken angezeigt
+      renderer.render(board)  shouldBe "[✅] [✅]\n[ ] [ ]" // match wird mit einem grünen hacken angezeigt
     }
 
     "layout cards row-by-row using r*cols+c" in { // tui muss das board mit den karten im richtigen format ausgeben bzw im richtigen layout
@@ -74,7 +77,7 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
       val tui = new MemoryTui(testControllerWithBoard(board))
 
-      tui.boardToString shouldBe "[A] [B]\n[C] [D]\n[E] [F]" // karten werden nach der form angezeigt i = row * cols + col
+      renderer.render(board)  shouldBe "[A] [B]\n[C] [D]\n[E] [F]" // karten werden nach der form angezeigt i = row * cols + col
     }
 
     
