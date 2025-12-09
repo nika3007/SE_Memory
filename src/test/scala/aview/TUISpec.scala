@@ -82,7 +82,6 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
       out shouldBe "[A] [B] [C]\n[D] [E] [F]" // karten werden nach der form angezeigt i = row * cols + col
     }
 
-    
     //Neue Tests im Stil des Profs:
     "flip a card on numeric input" in {
       val controller = testControllerWithBoard(
