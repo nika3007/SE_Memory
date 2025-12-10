@@ -8,6 +8,7 @@ import scala.io.StdIn.readLine
   println("Welcome to Memory!")
 
   println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
+  
   val themeName = readLine().trim()
   
   println("Choose AI level: none / easy / medium / hard / pro")

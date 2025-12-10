@@ -3,7 +3,10 @@ package aview
 import controller.Controller
 import util.Observer
 import controller.GameStatus
+import util.HintSystem
 import scala.io.StdIn.readLine
+import util.{AsciiRenderer, BoardRenderer}
+
 
 
 private val isTest: Boolean =
@@ -14,11 +17,12 @@ class MemoryTui(val controller: Controller) extends Observer:
 
   controller.add(this)
 
-  // NEU: Testbare Eingabeverarbeitung wie beim Prof
-  // -----------------------------------------
+  //neu templete Rendere:
+  private val renderer: BoardRenderer = AsciiRenderer()
+
+  //Testbare Eingabeverarbeitung wie beim Prof
   def processInputLine(input: String): Unit =
     controller.processInput(input)
-  // -----------------------------------------
 
 
   def run(): Unit =
@@ -38,7 +42,9 @@ class MemoryTui(val controller: Controller) extends Observer:
     while playing do
 
       //Zeige zu Beginn das Board an:
-      //println(boardToString)
+      //println(boardToString) //alte tui ausgabe
+      //println(boardToString) ->neu zu: 
+      //println(renderer.render(controller.board))
       //println()
 
       while (!controller.board.allMatched) do
@@ -52,7 +58,7 @@ class MemoryTui(val controller: Controller) extends Observer:
               //|| controller.gameStatus == GameStatus.Match then
               // Wer beginnt das neue Level?
               println("👉 Du bist dran!")
-              println(boardToString)
+              println(renderer.render(controller.board))
               println()
 
           // Erste Karte?
@@ -64,16 +70,40 @@ class MemoryTui(val controller: Controller) extends Observer:
           // Zweite Karte?
           else if controller.gameStatus == GameStatus.FirstCard then
             println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
-
+            
 
           val input = readLine()
-          println()
+          var continue = true
+        
+          //val input = readLine()
 
-          val continue = controller.processInput(input)
+          //HINT SYSTEM --------------------------------------------------
+          if input.trim.toLowerCase == "hint" then
+            HintSystem.getHint(controller.board) match
+              case Some((a, b)) =>
+                println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!")
+                println()
+              case None =>
+                println("💡 Kein sicheres Paar bekannt.")
+            //println(boardToString)
+            //println(renderer.render(controller.board))
+            //println()
+            
+            // NICHT als Spielzug werten → also weiter zur nächsten Runde:
+            continue = true
+          else
+            // Normale Eingabe verarbeiten
+            continue = controller.processInput(input)
+
+
+          //Abbruch:
           if !continue then
+            println()
             println("Spiel beendet durch Eingabeabbruch. Bye👋")
             println()
             return
+
+
 
         // --- AI TURN ----------------------------------------------------
         else if controller.aiEnabled then
@@ -81,7 +111,7 @@ class MemoryTui(val controller: Controller) extends Observer:
           // >>> FIX 2: Kein "AI ist dran!" direkt nach Levelstart
           if !levelJustStarted then
             println("🤖 AI ist dran!")
-            println(boardToString)
+            println(renderer.render(controller.board))
             println()
 
 
@@ -92,7 +122,7 @@ class MemoryTui(val controller: Controller) extends Observer:
 
           // zweite Karte kommt NACH observer update
           println("🤖 AI wählt zweite Karte... bitte warten!")
-          println()
+          //println()
           controller.aiTurnSecond()         
           Thread.sleep(1000)
 
@@ -113,7 +143,7 @@ class MemoryTui(val controller: Controller) extends Observer:
         else
           println("🤖 AI startet dieses Level!")
 
-        println(boardToString)
+        println(renderer.render(controller.board))
         println()
 
       else
@@ -138,32 +168,39 @@ class MemoryTui(val controller: Controller) extends Observer:
 
     // 1) Meldung immer zuerst
     if msg.nonEmpty then
+      println()
       println(msg)
       //println()
 
     // 2) Bei FirstCard und NextRound das Board NACH der Meldung
     controller.gameStatus match
       case GameStatus.FirstCard =>
-        println(boardToString)
+        println()
+        println(renderer.render(controller.board))
         println()
 
       case GameStatus.SecondCard =>
-        println(boardToString)
+        println(renderer.render(controller.board))
+        println()
 
       case GameStatus.Match =>
-        println(boardToString)
+        println(renderer.render(controller.board))
         println()
 
       case GameStatus.NoMatch =>
-        println(boardToString)
+        //println()
+        //println(boardToString)
+        println(renderer.render(controller.board))
         println()
+
+      case GameStatus.InvalidSelection(i) =>
+        //println(boardToString)
+        println(renderer.render(controller.board))
+        //println()
 
       case GameStatus.NextRound => 
         println()
-        //println(boardToString)
-
-      case GameStatus.InvalidSelection(_) =>
-        println(boardToString)
+        //println(renderer.render(controller.board))
 
       case GameStatus.Idle =>
         () // nichts drucken
@@ -171,7 +208,7 @@ class MemoryTui(val controller: Controller) extends Observer:
     //controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true
 
-
+  /* wird ersetzt durch renderer
   def boardToString: String =
     val cards = controller.board.cards
     val total = cards.size
@@ -198,3 +235,4 @@ class MemoryTui(val controller: Controller) extends Observer:
         else "[ ]"
       }.mkString(" ")
     }.mkString("\n")
+    */
