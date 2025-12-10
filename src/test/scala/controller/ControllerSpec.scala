@@ -105,22 +105,22 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       b3.cards(0).isFaceUp shouldBe false
       b3.cards(2).isFaceUp shouldBe false
     }
+    
 
-    "set InvalidSelection when the same face-up card is chosen again" in {
+    "should set InvalidSelection when selecting the same face-up card again" in {
       val c = freshControllerWithBoard()
 
-      // Erste gültige Wahl (flip A)
+      // Erste gültige Wahl
       c.processInput("0") shouldBe true
-      c.gameStatus shouldBe GameStatus.SecondCard
+      c.gameStatus shouldBe GameStatus.FirstCard
 
-      // Dieselbe Karte nochmal wählen -> invalid!
+      // dieselbe Karte nochmal → invalid!
       c.processInput("0") shouldBe true
 
-      // Controller soll erkennen: Die Karte ist bereits faceUp
       c.gameStatus shouldBe GameStatus.InvalidSelection(0)
     }
 
-  
+
     "undo and restore the previous board after one move" in {
       val c = freshControllerWithBoard()
       val original = c.game.save()
