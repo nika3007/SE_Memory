@@ -9,7 +9,6 @@ import org.scalatest.matchers.should.Matchers
 //import java.io.ByteArrayOutputStream
 //import java.io.ByteArrayInputStream
 
-
 class MemoryTuiSpec extends AnyWordSpec with Matchers {
 
   private val renderer = AsciiRenderer()

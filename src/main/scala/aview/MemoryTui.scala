@@ -8,9 +8,9 @@ import scala.io.StdIn.readLine
 import util.{AsciiRenderer, BoardRenderer}
 
 
-
 private val isTest: Boolean =
   sys.props.contains("test.env")
+
 
 
 class MemoryTui(val controller: Controller) extends Observer:

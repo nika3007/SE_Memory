@@ -1,12 +1,13 @@
-package controller //spec und der eigentliche controller leben in einem package
+package controller
 
-import model.{Board, Card, MemoryGame, Level, BoardSizes, Difficulties, ThemeFactory, RandomAI}
+import model.{Board, Card, MemoryGame, Level, BoardSizes, Difficulties, ThemeFactory, RandomAI, NoAI}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import scala.collection.mutable
 
-final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klasse wird nicht weiter ausgebaut
+final class ControllerSpec extends AnyWordSpec with Matchers {
 
-  //hilfsfunktion, kleines board, um randomness zu vermeiden-> fürs testen
+  // Hilfsfunktion, kleines board, um randomness zu vermeiden
   private def smallBoard(): Board =
     Board(Vector(
       Card(0, "A"), // pair A
@@ -15,111 +16,101 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
       Card(3, "B")
     ))
 
-  private def freshControllerWithBoard(): Controller = // kleiner privater hilfscontroller zum testen mit fixierten werten
+  private def freshControllerWithBoard(): Controller =
     val theme = ThemeFactory.getTheme("fruits")
     val ai = RandomAI()
     val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
     val game = MemoryGame(theme, ai, Vector(level))
     val c = Controller(game)
-    //überschreibe das eigentliche random board hiermit für testzwecke
     c.game.board = smallBoard()
     c
 
+  // NEU: Hilfsfunktion um currentPlayer zu setzen (reflection)
+  private def setCurrentPlayer(controller: Controller, player: String): Unit = {
+    val field = controller.getClass.getDeclaredField("currentPlayer")
+    field.setAccessible(true)
+    field.set(controller, player)
+  }
+
   "A Controller" should {
 
-    "stop the game when input is null or empty" in { // das spiel sollte sofort unterbrochen werden beu null oder leerem input
+    "stop the game when input is null or empty" in {
       val c = freshControllerWithBoard()
       val before = c.board
 
       c.processInput(null) shouldBe false
-      c.board shouldBe before // keine veränderung ignoriere falschen input
+      c.board shouldBe before
 
       c.processInput("   ") shouldBe false
-      c.board shouldBe before // "  "
-    }
-
-
-
-    "reject non-numeric input and keep the board unchanged" in { // jeglicher input der keine zahl ist wird ignoriert aber das board bleibt unverändert
-      val c = freshControllerWithBoard()
-      val before = c.board
-
-      val result = c.processInput("abc") // input der keine zahl ist wird auch ignoriert board unverändert und spiel läft normal weiter
-      //printe eine error message aber spiel läuft weiter
-
-      result shouldBe true          // spiel läuft weiter
-      c.board shouldBe before       // board unverändert
-    }
-
-    "reject out-of-range indices and keep the board unchanged" in { // indexe bzw zahlen die out of range sind werden ignoriert und spiel läuft weiter
-      val c = freshControllerWithBoard()
-      val before = c.board
-
-      c.processInput("-1") shouldBe true // ignoriere werte die folgende grenzen übersteigen
-      c.processInput("99") shouldBe true
-      // printe error message aber das spiel läuft dennoch normal weiter
-
       c.board shouldBe before
     }
 
-    "flip a valid first card and not resolve yet" in { // dreht eine gültige karte um aber "löst" das spiel nicht auf
+    "reject non-numeric input and keep the board unchanged" in {
       val c = freshControllerWithBoard()
       val before = c.board
 
-      val ok = c.processInput("0") // erste gültige umgedrehte karte
+      val result = c.processInput("abc")
+      result shouldBe true
+      c.board shouldBe before
+    }
+
+    "reject out-of-range indices and keep the board unchanged" in {
+      val c = freshControllerWithBoard()
+      val before = c.board
+
+      c.processInput("-1") shouldBe true
+      c.processInput("99") shouldBe true
+      c.board shouldBe before
+    }
+
+    "flip a valid first card and not resolve yet" in {
+      val c = freshControllerWithBoard()
+      val before = c.board
+
+      val ok = c.processInput("0")
       ok shouldBe true
 
       val after = c.board
-      after.cards(0).isFaceUp shouldBe true           // karte 0 aufgedeckt, alle anderen aber nicht, warten auf aufdeckung
+      after.cards(0).isFaceUp shouldBe true
       after.cards(1).isFaceUp shouldBe false
       after.cards(2).isFaceUp shouldBe false
       after.cards(3).isFaceUp shouldBe false
-
-      // board hat sich durch das umdrehen einer validen karte verändert --> board soll geupdatet werden und ist nicht wie davor
       after should not be theSameInstanceAs(before)
     }
 
-    "mark a pair as matched when two matching cards are chosen" in { // zwei passende bzw gleiche karten werden als ein match markiert
+    "mark a pair as matched when two matching cards are chosen" in {
       val c = freshControllerWithBoard()
 
-      // erste Karte A
-      c.processInput("0") shouldBe true // erste karte aufdecken (gültig)
-      // zweite Karte A
-      c.processInput("1") shouldBe true // zweite karte aufdecken (auch gültig)
+      c.processInput("0") shouldBe true
+      c.processInput("1") shouldBe true
 
       val b2 = c.board
-      b2.cards(0).isMatched shouldBe true // beide karten sind gleich also ein match und werden dementsprechend markiert
+      b2.cards(0).isMatched shouldBe true
       b2.cards(1).isMatched shouldBe true
     }
 
-    "flip back non-matching cards after a failed second choice" in { // drehe ungleiche karten wieder um da sie kein match sind
+    "flip back non-matching cards after a failed second choice" in {
       val c = freshControllerWithBoard()
 
-      // erste karte
-      c.processInput("0") shouldBe true // gültige erste karte wird umgedreht und gültige zweite karte auch
-      // zweite karte ist kein match
+      c.processInput("0") shouldBe true
       c.processInput("2") shouldBe true
 
-      // karten werden bei keinem match wieder umgedreht und board wird vorerst seit dem letzen stand unverändert zurückgegeben
+      Thread.sleep(1600) // Wartezeit für das automatische Zurückdrehen
+      
       val b3 = c.board
       b3.cards(0).isFaceUp shouldBe false
       b3.cards(2).isFaceUp shouldBe false
     }
-    
 
     "should set InvalidSelection when selecting the same face-up card again" in {
       val c = freshControllerWithBoard()
 
-      // Erste gültige Wahl
       c.processInput("0") shouldBe true
       c.gameStatus shouldBe GameStatus.FirstCard
 
-      // dieselbe Karte nochmal → invalid!
       c.processInput("0") shouldBe true
-
       c.gameStatus shouldBe GameStatus.InvalidSelection(0)
     }
-
 
     "undo and restore the previous board after one move" in {
       val c = freshControllerWithBoard()
@@ -147,6 +138,138 @@ final class ControllerSpec extends AnyWordSpec with Matchers { //final --> klass
 
       c.undo()
       c.board shouldBe before
+    }
+
+    "report aiEnabled correctly" in {
+      val c1 = freshControllerWithBoard()
+      c1.aiEnabled shouldBe true
+
+      val theme = ThemeFactory.getTheme("fruits")
+      val ai = NoAI()
+      val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
+      val game = MemoryGame(theme, ai, Vector(level))
+      val c2 = Controller(game)
+      c2.aiEnabled shouldBe false
+    }
+
+    "ignore human input when currentPlayer is ai" in {
+      val c = freshControllerWithBoard()
+      setCurrentPlayer(c, "ai") // Reflection verwenden
+      val before = c.board
+      c.processInput("0") shouldBe true
+      c.board shouldBe before // keine Änderung
+    }
+
+    "do nothing when aiTurnFirst/Second called but currentPlayer is human" in {
+      val c = freshControllerWithBoard()
+      setCurrentPlayer(c, "human") // Reflection verwenden
+      val before = c.board
+      c.aiTurnFirst()
+      c.aiTurnSecond()
+      c.board shouldBe before
+    }
+
+    "execute aiTurnFirst and aiTurnSecond when currentPlayer is ai" in {
+      val c = freshControllerWithBoard()
+      setCurrentPlayer(c, "ai") // Reflection verwenden
+      
+      // beide Methoden sollten eine Karte aufdecken
+      c.aiTurnFirst()
+      c.board.cards.exists(_.isFaceUp) shouldBe true
+      
+      // Reset für zweiten Test
+      setCurrentPlayer(c, "ai")
+      c.game.board = smallBoard() // Board zurücksetzen
+      
+      c.aiTurnSecond()
+      c.board.cards.exists(_.isFaceUp) shouldBe true
+    }
+
+    "print message when undo called on empty history" in {
+      val c = freshControllerWithBoard()
+      noException shouldBe thrownBy {
+        c.undo()
+      }
+    }
+    // Füge diese Tests am Ende deiner bestehenden Spec hinzu:
+
+    "handle NoAI case in player switching" in {
+      // Controller mit NoAI erstellen
+      val theme = ThemeFactory.getTheme("fruits")
+      val ai = NoAI()
+      val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
+      val game = MemoryGame(theme, ai, Vector(level))
+      val c = Controller(game)
+      c.game.board = smallBoard()
+      
+      val field = c.getClass.getDeclaredField("currentPlayer")
+      field.setAccessible(true)
+      
+      // Start mit human
+      field.set(c, "human")
+      
+      // Simuliere NoMatch durch direkten Aufruf von handleCardSelection
+      val method = c.getClass.getDeclaredMethod("handleCardSelection", classOf[Int])
+      method.setAccessible(true)
+      
+      // Erste Karte
+      method.invoke(c, 0.asInstanceOf[AnyRef])
+      // Zweite Karte (unterschiedlich - NoMatch)
+      method.invoke(c, 2.asInstanceOf[AnyRef])
+      
+      Thread.sleep(1600)
+      field.get(c) shouldBe "human" // Bleibt human bei NoAI
+    }
+
+    "switch player from human to ai after no match with active AI" in {
+      val c = freshControllerWithBoard()
+      val field = c.getClass.getDeclaredField("currentPlayer")
+      field.setAccessible(true)
+      
+      field.set(c, "human")
+      
+      val method = c.getClass.getDeclaredMethod("handleCardSelection", classOf[Int])
+      method.setAccessible(true)
+      
+      method.invoke(c, 0.asInstanceOf[AnyRef]) // Erste Karte
+      method.invoke(c, 2.asInstanceOf[AnyRef]) // Zweite Karte (NoMatch)
+      
+      Thread.sleep(1600)
+      field.get(c) shouldBe "ai" // Wechselt zu ai
+    }
+
+    "switch player from ai to human after no match with active AI" in {
+      val c = freshControllerWithBoard()
+      val field = c.getClass.getDeclaredField("currentPlayer")
+      field.setAccessible(true)
+      
+      field.set(c, "ai")
+      
+      val method = c.getClass.getDeclaredMethod("handleCardSelection", classOf[Int])
+      method.setAccessible(true)
+      
+      method.invoke(c, 0.asInstanceOf[AnyRef]) // Erste Karte
+      method.invoke(c, 2.asInstanceOf[AnyRef]) // Zweite Karte (NoMatch)
+      
+      Thread.sleep(1600)
+      field.get(c) shouldBe "human" // Wechselt zurück zu human
+    }
+
+    "verify resetBoard and NextRound status after no match" in {
+      val c = freshControllerWithBoard()
+      
+      val method = c.getClass.getDeclaredMethod("handleCardSelection", classOf[Int])
+      method.setAccessible(true)
+      
+      method.invoke(c, 0.asInstanceOf[AnyRef])
+      method.invoke(c, 2.asInstanceOf[AnyRef]) // NoMatch
+      
+      Thread.sleep(1600)
+      
+      // Check: Alle nicht-gematched Karten sind face down
+      c.board.cards.filterNot(_.isMatched).foreach(_.isFaceUp shouldBe false)
+      // Check: NextRound Status
+      c.gameStatus shouldBe GameStatus.NextRound
     }
   }
 }

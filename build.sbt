@@ -8,17 +8,27 @@ lazy val root = project
 
     scalaVersion := scala3Version,
 
+    // 1. ScalaFX für die GUI
+    libraryDependencies += "org.scalafx" %% "scalafx" % "20.0.0-R31",
+
+
+    // 3. Tests
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
     Test / javaOptions += "-Dtest.env=true",
 
 
+    // Compiler-Optionen
+    scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
 
+    // Fork für JavaFX erforderlich
+    run / fork := false,
+
+    // 4. sbt Scoverage Settings
     coverageEnabled := true, //Aktiviert die Test-Coverage erst
     coverageMinimumStmtTotal := 50, //Mindest-Coverage = 50 %
     coverageFailOnMinimum := false, //build schlägt NICHT fehl auch wenn Mindest-Coverage nicht erreicht wird. meckert nur
-    )
 
-
+  )
 
 /*
 coverageEnabled := true
