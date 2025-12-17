@@ -5,7 +5,7 @@ import scala.util.{Try, Success, Failure}
 import util.Observable
 import scala.util.Try
 
-class Controller(val game: MemoryGame) extends Observable:
+class Controller(val game: MemoryGame) extends Observable with ControllerAPI:
 
   var gameStatus: GameStatus = GameStatus.Idle // aktueller spielstatus
 

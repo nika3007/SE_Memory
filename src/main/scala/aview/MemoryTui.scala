@@ -13,7 +13,7 @@ private val isTest: Boolean =
 
 
 
-class MemoryTui(val controller: Controller) extends Observer:
+class MemoryTui(val controller: ControllerAPI) extends Observer:
 
   controller.add(this)
 

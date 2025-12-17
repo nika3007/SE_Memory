@@ -16,7 +16,7 @@ import controller.GameStatus
 import model.*
 import util.HintSystem
 
-class GUI(val controller: Controller) extends JFXApp3 with Observer:
+class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
   
   println("[GUI] Constructor called - adding as observer")
   controller.add(this)
