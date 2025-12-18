@@ -4,6 +4,8 @@ import model.{MemoryGame, Board, GameMemento, NoAI}
 import scala.util.{Try, Success, Failure}
 import util.Observable
 import scala.util.Try
+import controller.ControllerAPI
+
 
 class Controller(val game: MemoryGame) extends Observable with ControllerAPI:
 
@@ -84,7 +86,7 @@ class Controller(val game: MemoryGame) extends Observable with ControllerAPI:
     //gameStatus = GameStatus.SecondCard
     execute(ChooseCardCommand(this, second))
     //notifyObservers
-      
+
 
   // Spiellogik – nur EINMAL definiert!:-------------------------------------
   private[controller] def handleCardSelection(i: Int): Unit =

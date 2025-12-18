@@ -1,15 +1,24 @@
 package controller
 
+import util.Observer
 import model.Board
+import model.MemoryGameAPI
 
-trait ControllerApi:
+
+trait ControllerAPI:
+
   def add(o: Observer): Unit
   def remove(o: Observer): Unit
-  
-  def board: Board
-  def gameStatus: GameStatus
-  def currentPlayer: String
+  def notifyObservers: Unit
 
+  def board: Board
   def processInput(input: String): Boolean
   def undo(): Unit
-  def redo(): Unit
+
+  def currentPlayer: String
+  def gameStatus: GameStatus
+
+  def aiEnabled: Boolean
+  def aiTurnFirst(): Unit
+  def aiTurnSecond(): Unit
+  def game: MemoryGameAPI

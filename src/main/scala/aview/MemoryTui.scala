@@ -6,6 +6,7 @@ import controller.GameStatus
 import util.HintSystem
 import scala.io.StdIn.readLine
 import util.{AsciiRenderer, BoardRenderer}
+import controller.ControllerAPI
 
 
 private val isTest: Boolean =
@@ -29,7 +30,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     if (isTest) return
 
     //Start:
-    println()  
+    println()
     println(s"🎮 Memory gestartet! Level 1\n")
     //println("👉 Du bist dran!")
     //println(boardToString)
@@ -43,7 +44,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
       //Zeige zu Beginn das Board an:
       //println(boardToString) //alte tui ausgabe
-      //println(boardToString) ->neu zu: 
+      //println(boardToString) ->neu zu:
       //println(renderer.render(controller.board))
       //println()
 
@@ -63,18 +64,18 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
           // Erste Karte?
           if controller.gameStatus == GameStatus.Idle
-            || controller.gameStatus == GameStatus.NextRound 
+            || controller.gameStatus == GameStatus.NextRound
             || controller.gameStatus == GameStatus.Match then
             println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
 
           // Zweite Karte?
           else if controller.gameStatus == GameStatus.FirstCard then
             println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
-            
+
 
           val input = readLine()
           var continue = true
-        
+
           //val input = readLine()
 
           //HINT SYSTEM --------------------------------------------------
@@ -88,7 +89,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
             //println(boardToString)
             //println(renderer.render(controller.board))
             //println()
-            
+
             // NICHT als Spielzug werten → also weiter zur nächsten Runde:
             continue = true
           else
@@ -117,13 +118,13 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
           Thread.sleep(1000)
           println("🤖 AI wählt erste Karte...")
-          controller.aiTurnFirst()       
+          controller.aiTurnFirst()
           Thread.sleep(1500)
 
           // zweite Karte kommt NACH observer update
           println("🤖 AI wählt zweite Karte... bitte warten!")
           //println()
-          controller.aiTurnSecond()         
+          controller.aiTurnSecond()
           Thread.sleep(1000)
 
           // >>> FIX 2: Nach dem ersten AI-Zug im neuen Level wieder normal drucken
@@ -132,10 +133,8 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
       // --- LEVEL DONE -> next Level ---------------------------------------------------
       if controller.game.nextLevel() then
-        levelJustStarted = true 
-        val lvl = controller.game.levels.indexOf(controller.game.currentLevel) + 1
-        println()
-        println(s"🎉 Level abgeschlossen! Starte Level $lvl ...\n")
+        val lvl = controller.game.currentLevelNumber
+        println(s"Next level: $lvl / ${controller.game.levelsCount}")
 
         // Wer startet dieses Level?
         if controller.currentPlayer == "human" then
@@ -149,14 +148,14 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       else
         // game over
         playing = false
-        println()  
+        println()
 
         if controller.currentPlayer == "human" then
           println("🎉 Du hast das ganze Spiel gewonnen! 🎉")
           println()
         else
           println("🤖 Die AI hat das ganze Spiel gewonnen! 🎉")
-          
+
         println()
 
 
@@ -198,7 +197,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
         println(renderer.render(controller.board))
         //println()
 
-      case GameStatus.NextRound => 
+      case GameStatus.NextRound =>
         println()
         //println(renderer.render(controller.board))
 

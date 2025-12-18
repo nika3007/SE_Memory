@@ -1,5 +1,6 @@
 package aview
 
+import controller.ControllerAPI
 import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.layout.{BorderPane, GridPane, HBox, VBox}
@@ -16,11 +17,12 @@ import controller.GameStatus
 import model.*
 import util.HintSystem
 
+
 class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
-  
+
   println("[GUI] Constructor called - adding as observer")
   controller.add(this)
-  
+
   // GUI-Komponenten
   private val grid = new GridPane()
   private val statusLabel = new Label("Willkommen zu Memory!") {
@@ -35,22 +37,22 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
     font = Font("Arial", 14)
     textFill = Color.DarkRed
   }
-  
+
   override def start(): Unit =
     stage = new JFXApp3.PrimaryStage {
       title = "Memory – ScalaFX"
       width = 900
       height = 750
-      
+
       scene = new Scene {
         root = buildRoot()
       }
     }
-    
+
     // Initiales Board zeichnen
     drawBoard()
     updateStatus()
-  
+
   // --------------- UI ROOT ---------------------------------------------
   private def buildRoot(): BorderPane =
     val root = new BorderPane()
@@ -58,7 +60,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
     root.center = grid
     root.bottom = buildStatusBar()
     root
-  
+
   private def buildMenu(): MenuBar =
     new MenuBar {
       menus = List(
@@ -68,7 +70,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
               onAction = _ => showHint()
             },
             new MenuItem("Rückgängig (Undo)") {
-              onAction = _ => 
+              onAction = _ =>
                 controller.undo()
                 drawBoard()
             },
@@ -79,13 +81,13 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
         }
       )
     }
-  
+
   private def buildStatusBar(): VBox =
     new VBox {
       spacing = 5
       padding = Insets(10)
       alignment = Pos.CenterLeft
-      
+
       children = Seq(
         statusLabel,
         new HBox {
@@ -94,7 +96,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
         }
       )
     }
-  
+
   // --------------- BOARD ZEICHNEN ----------------------------------------
   private def drawBoard(): Unit =
     println(s"[GUI drawBoard] Called")
@@ -102,27 +104,27 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       val b = controller.board
       // Hole Board-Größe über eine Hilfsfunktion
       val (rows, cols) = calculateBoardSize(b)
-      
+
       println(s"[GUI drawBoard] Board size: $rows x $cols, Cards: ${b.cards.length}")
       println(s"[GUI drawBoard] Matched cards: ${b.cards.count(_.isMatched)}/${b.cards.length}")
-      
+
       grid.children.clear()
       grid.hgap = 10
       grid.vgap = 10
       grid.padding = Insets(20)
       grid.alignment = Pos.Center
-      
+
       for (r <- 0 until rows) do
         for (c <- 0 until cols) do
           val i = r * cols + c
           if i < b.cards.length then
             val card = b.cards(i)
-            
+
             val button = new Button {
               prefWidth = 100
               prefHeight = 120
               font = Font("Arial", 24)
-              
+
               // Stil basierend auf Kartenstatus
               if card.isMatched then
                 style = "-fx-background-color: #90EE90; -fx-border-color: #228B22; -fx-border-width: 3;"
@@ -136,7 +138,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
                 style = "-fx-background-color: linear-gradient(to bottom, #4169E1, #00008B); -fx-border-color: #191970; -fx-border-width: 2;"
                 text = "?"
                 textFill = Color.White
-              
+
               // Event-Handler (vereinfacht ohne implizite Parameter)
               onAction = { () =>
                 println(s"[GUI] Button clicked: index=$i, card matched=${card.isMatched}, faceUp=${card.isFaceUp}")
@@ -144,7 +146,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
                   controller.processInput(i.toString)
               }
             }
-            
+
             // Schatten-Effekt
             button.effect = new DropShadow {
               radius = 5
@@ -152,26 +154,26 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
               offsetY = 3
               color = Color.Gray
             }
-            
+
             GridPane.setRowIndex(button, r)
             GridPane.setColumnIndex(button, c)
             grid.children.add(button)
     } catch {
-      case e: Exception => 
+      case e: Exception =>
         println(s"[GUI ERROR in drawBoard] $e")
         e.printStackTrace()
         statusLabel.text = s"Fehler beim Zeichnen: ${e.getMessage}"
     }
-  
+
   // Hilfsfunktion zur Berechnung der Board-Größe
   private def calculateBoardSize(board: Board): (Int, Int) =
     val totalCards = board.cards.length
     // Annahme: Board ist immer rechteckig, versuche typische Größen
     if totalCards <= 4 then (2, 2)        // 2x2
-    else if totalCards <= 16 then (4, 4)  // 4x4  
+    else if totalCards <= 16 then (4, 4)  // 4x4
     else if totalCards <= 36 then (6, 6)  // 6x6
     else (8, 8)                           // Fallback
-  
+
   // --------------- STATUS AKTUALISIEREN --------------------------------
   private def updateStatus(): Unit =
     println(s"[GUI updateStatus] Called")
@@ -179,30 +181,25 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       println(s"[GUI updateStatus] GameStatus: ${controller.gameStatus}")
       val allMatched = controller.board.cards.forall(_.isMatched)
       println(s"[GUI updateStatus] All matched? $allMatched")
-      
+
       // Statusmeldung
       val msg = GameStatus.message(controller.gameStatus)
       if msg.nonEmpty then
         statusLabel.text = msg
-      
+
       // Spieler-Info
       playerLabel.text = s"Spieler: ${if controller.currentPlayer == "human" then "Mensch" else "KI"}"
-      
+
       // Level-Info - Versuche Level-Nummer zu ermitteln
-      val currentLevelNumber = try {
-        // Versuche über Levels-Vector
-        val levels = controller.game.levels
-        val current = controller.game.currentLevel
-        levels.indexOf(current) + 1
-      } catch {
-        case _: Exception => 1  // Fallback
-      }
-      
+      val currentLevelNumber = controller.game.currentLevelNumber
       levelLabel.text = s"Level: $currentLevelNumber"
-      
+      stage.title = s"Memory – Level $currentLevelNumber"
+
+      levelLabel.text = s"Level: $currentLevelNumber"
+
       // Fenstertitel aktualisieren
       stage.title = s"Memory – Level $currentLevelNumber"
-      
+
       // Spezielle Effekte für bestimmte Events
       // Prüfe erst welche GameStatus-Werte wirklich existieren
       controller.gameStatus match {
@@ -210,7 +207,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
           println("[GUI] LevelComplete or similar detected!")
           statusLabel.text = "Level geschafft!"
           statusLabel.textFill = Color.Green
-          
+
           // Warte und zeichne neu
           new Thread(() => {
             Thread.sleep(1500)
@@ -221,7 +218,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
               drawBoard()
             }
           }).start()
-          
+
         case status if status.toString.contains("Match") =>
           // Animation für Match
           statusLabel.textFill = Color.Green
@@ -231,10 +228,10 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
               statusLabel.textFill = Color.DarkBlue
             }
           }).start()
-          
+
         case status if status.toString.contains("NoMatch") =>
           statusLabel.textFill = Color.Red
-          
+
         case _ =>
           statusLabel.textFill = Color.DarkBlue
       }
@@ -244,7 +241,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
         e.printStackTrace()
         statusLabel.text = s"Status-Fehler: ${e.getMessage}"
     }
-    
+
   // --------------- HINT SYSTEM -----------------------------------------
   private def showHint(): Unit =
     try {
@@ -258,7 +255,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       case e: Exception =>
         statusLabel.text = s"Hint-Fehler: ${e.getMessage}"
     }
-  
+
   // --------------- OBSERVER UPDATE -----------------------------------
   override def update: Boolean =
     println(s"[GUI Observer Update] Called from controller")
