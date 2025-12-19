@@ -140,7 +140,7 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
                 textFill = Color.White
 
               // Event-Handler (vereinfacht ohne implizite Parameter)
-              onAction = { () =>
+              onAction = handle {
                 println(s"[GUI] Button clicked: index=$i, card matched=${card.isMatched}, faceUp=${card.isFaceUp}")
                 if controller.currentPlayer == "human" && !card.isMatched && !card.isFaceUp then
                   controller.processInput(i.toString)

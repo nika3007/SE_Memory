@@ -28,12 +28,12 @@ import scala.io.StdIn.readLine
 
 
   // 3) KI auswählen
-  println("Choose AI level: none / easy / medium / hard / pro")
+  println("Choose AI level: none / easy / hard / pro")
   val aiChoice = readLine().trim.toLowerCase
   val ai: AIPlayer = aiChoice match
     case "none"   => NoAI()
     case "easy"   => RandomAI()
-    case "medium" => MediumAI()
+    //case "medium" => MediumAI()
     case "hard"   => HardAI()
     case "pro"    => MemoryAI()   
     case _        => RandomAI()

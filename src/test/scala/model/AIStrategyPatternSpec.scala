@@ -41,6 +41,7 @@ final class AIStrategySpec extends AnyWordSpec with Matchers {
     }
   }
 
+/*
   // =======================================================================
   // MediumAI – Vollständige Abdeckung
   // =======================================================================
@@ -130,7 +131,34 @@ final class AIStrategySpec extends AnyWordSpec with Matchers {
       // Aber: cleanup entfernt nur Elemente aus Listen, nicht die Keys!
       succeed // Wir testen nur, dass es durchläuft
     }
+
+    "remember new symbol when memory is empty" in {
+      val ai = MediumAI()
+      val mem = accessMemory(ai)
+
+      val b = board(Vector("X","Y","Z","W"))
+      ai.chooseCard(b)
+
+      mem.nonEmpty shouldBe true
+    }
+
+    "evict oldest entry when memory exceeds maxEntries using cleanup" in {
+      val ai = MediumAI()
+      val mem = accessMemory(ai)
+
+      mem += "A" -> mutable.ListBuffer(0)
+      mem += "B" -> mutable.ListBuffer(1)
+      mem += "C" -> mutable.ListBuffer(2)
+      mem += "D" -> mutable.ListBuffer(3)
+
+      val b = board(Vector("E","E","F","F","G","G","H","H"))
+      ai.chooseCard(b)
+
+      mem.size should be <= 4
+    }
   }
+  
+  */
 
   // =======================================================================
   // HardAI – Vollständige Abdeckung
@@ -307,6 +335,21 @@ final class AIStrategySpec extends AnyWordSpec with Matchers {
       // Noch eine Karte wählen
       val result2 = ai.chooseCard(b)
       result2 should (be >= 0 and be < 4)
+    }
+        "fallback when firstPick exists but no matching second card is known" in {
+      val ai = MemoryAI()
+      val mem = accessMemory(ai)
+
+      mem += "A" -> mutable.ListBuffer(0)
+
+      val firstPickField = ai.getClass.getDeclaredField("firstPick")
+      firstPickField.setAccessible(true)
+      firstPickField.set(ai, Some(("A", 0)))
+
+      val b = board(Vector("A","A","B","C"))
+      val result = ai.chooseCard(b)
+
+      result should (be >= 0 and be < 4)
     }
   }
 }

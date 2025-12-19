@@ -78,5 +78,39 @@ class MemoryGameSpec extends AnyWordSpec with Matchers {
 
       game.nextLevel() shouldBe false
     }
+
+    "expose correct level count and current level number" in {
+      val game = MemoryGame(theme, DummyAI, levels)
+
+      game.levelsCount shouldBe 2
+      game.currentLevelNumber shouldBe 1
+    }
+
+    "start at level 1" in {
+      val game = MemoryGame(theme, DummyAI, levels)
+
+      game.currentLevel shouldBe level1
+    }
+
+    "advance levels until exhausted" in {
+      val game = MemoryGame(theme, DummyAI, levels)
+
+      game.nextLevel() shouldBe true
+      game.currentLevelNumber shouldBe 2
+
+      game.nextLevel() shouldBe false
+      game.currentLevelNumber shouldBe 2
+    }
+
+    "rebuild board when advancing level" in {
+      val game = MemoryGame(theme, DummyAI, levels)
+      val before = game.board.cards.map(_.symbol)
+
+      game.nextLevel()
+      val after = game.board.cards.map(_.symbol)
+
+      before should not equal after
+    }
+
   }
 }

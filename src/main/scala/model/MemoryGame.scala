@@ -21,7 +21,7 @@ final case class MemoryGame(theme: Theme, ai: AIPlayer, levels: Vector[Level])
     val needed = (size.rows * size.cols) / level.difficulty.matchAmount
 
     val symbols =
-      Stream.continually(theme.symbols).flatten.take(needed).toVector
+      LazyList.continually(theme.symbols).flatten.take(needed).toVector
 
     val deck = Random.shuffle(symbols ++ symbols)
 

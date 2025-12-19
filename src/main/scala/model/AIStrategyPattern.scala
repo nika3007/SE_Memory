@@ -20,7 +20,7 @@ class RandomAI extends AIPlayer:
     val hidden = board.cards.filter(c => !c.isFaceUp && !c.isMatched)
     hidden(Random.nextInt(hidden.size)).id
 
-
+/*
 //Medium AI (merkt sich letzte 4 Karten):----------------------------------------------
 class MediumAI extends AIPlayer:
 
@@ -76,7 +76,7 @@ class MediumAI extends AIPlayer:
       list --= list.filter(id =>
         board.cards(id).isFaceUp || board.cards(id).isMatched
       )
-
+*/
 
 //Hard AI (merkt alles aber nicht perfekt):----------------------------------------------
 class HardAI extends AIPlayer:
