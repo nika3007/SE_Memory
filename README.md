@@ -1,4 +1,4 @@
-[![Coverage Status](https://coveralls.io/repos/github/nika3007/SE_Memory/badge.svg?branch=main&delay=4)](https://coveralls.io/github/nika3007/SE_Memory?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/nika3007/SE_Memory/badge.svg?branch=main&delay=5)](https://coveralls.io/github/nika3007/SE_Memory?branch=main)
 
 ## sbt project compiled with Scala 3
 
