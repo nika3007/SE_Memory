@@ -1,9 +1,8 @@
-package controller
+package controller.controllerComponent
 
 import util.Observer
 import model.Board
 import model.MemoryGameAPI
-
 
 trait ControllerAPI:
 
@@ -16,7 +15,7 @@ trait ControllerAPI:
   def undo(): Unit
 
   def currentPlayer: String
-  def gameStatus: GameStatus
+  //def gameStatus: GameStatus
 
   def aiEnabled: Boolean
   def aiTurnFirst(): Unit

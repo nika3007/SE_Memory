@@ -1,4 +1,7 @@
-package model
+package model.modelComponent
+import model.Board
+import model.Level
+
 
 trait MemoryGameAPI:
   def board: Board
