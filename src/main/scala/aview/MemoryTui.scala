@@ -2,11 +2,12 @@ package aview
 
 import controller.Controller
 import util.Observer
-import controller.GameStatus
+import controller.controllerComponent.GameStatus
 import util.HintSystem
 import scala.io.StdIn.readLine
 import util.{AsciiRenderer, BoardRenderer}
-import controller.ControllerAPI
+import controller.controllerComponent.ControllerAPI
+
 
 
 private val isTest: Boolean =
@@ -133,7 +134,8 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
       // --- LEVEL DONE -> next Level ---------------------------------------------------
       if controller.game.nextLevel() then
-        val lvl = controller.game.currentLevelNumber
+        val lvl = controller.game.currentLevelIndex
+
         println(s"Next level: $lvl / ${controller.game.levelsCount}")
 
         // Wer startet dieses Level?

@@ -1,4 +1,4 @@
-package controller
+package controller.controllerComponent
 
 enum GameStatus:
   case InvalidSelection(i: Int)
@@ -8,6 +8,7 @@ enum GameStatus:
   case NoMatch
   case NextRound
   case Idle
+  case LevelComplete
 
 object GameStatus:
   def message(status: GameStatus): String = status match

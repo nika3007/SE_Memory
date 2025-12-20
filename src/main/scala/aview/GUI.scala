@@ -1,6 +1,6 @@
 package aview
 
-import controller.ControllerAPI
+import controller.controllerComponent.ControllerAPI
 import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.layout.{BorderPane, GridPane, HBox, VBox}
@@ -13,7 +13,7 @@ import scalafx.Includes._
 
 import controller.Controller
 import util.Observer
-import controller.GameStatus
+import controller.controllerComponent.GameStatus
 import model.*
 import util.HintSystem
 
@@ -191,7 +191,8 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       playerLabel.text = s"Spieler: ${if controller.currentPlayer == "human" then "Mensch" else "KI"}"
 
       // Level-Info - Versuche Level-Nummer zu ermitteln
-      val currentLevelNumber = controller.game.currentLevelNumber
+      val currentLevelNumber = controller.game.currentLevelIndex
+
       levelLabel.text = s"Level: $currentLevelNumber"
       stage.title = s"Memory – Level $currentLevelNumber"
 

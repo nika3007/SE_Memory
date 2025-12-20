@@ -1,11 +1,13 @@
 package controller.controllerComponent.controllerBaseImpl
 
+import controller.*
 import controller.controllerComponent.ControllerAPI
-import model.{Board, NoAI}
-import util.{Observable}
+import model.*
+import model.modelComponent.MemoryGameAPI
+import util.Observable
 import scala.util.Try
-import model.MemoryGameAPI
-import controller.Command
+import controller.controllerComponent.GameStatus
+
 
 final class ControllerImpl(private val _game: MemoryGameAPI)
   extends Observable

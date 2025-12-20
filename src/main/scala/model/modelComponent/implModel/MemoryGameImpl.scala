@@ -1,7 +1,8 @@
 package model.modelComponent.implModel
-
-import model.*
 import scala.util.Random
+import model.*
+import model.modelComponent.MemoryGameAPI
+
 
 final class MemoryGameImpl(
   val theme: Theme,
@@ -10,25 +11,40 @@ final class MemoryGameImpl(
 ) extends MemoryGameAPI:
 
   private var _levelIndex: Int = 0
-
-  override def levelsCount: Int = levels.size
-
-  override def currentLevelNumber: Int = _levelIndex + 1
+  private var _board: Board = buildBoard(levels(_levelIndex))
 
   override def board: Board = _board
+  override def board_=(b: Board): Unit = _board = b
+  override def levelsCount: Int = levels.size
+
+  override def currentLevel: Level = levels(_levelIndex)
+
+  override def currentLevelIndex: Int = _levelIndex
+  override def currentLevelNumber: Int = _levelIndex + 1
+
+  override def save(): GameMemento =
+    GameMemento(board)
+
+  override def restore(m: GameMemento): Unit =
+    board = m.board
 
   override def nextLevel(): Boolean =
     if _levelIndex + 1 < levels.size then
       _levelIndex += 1
-      _board = buildBoard(levels(_levelIndex))
+      board = buildBoard(levels(_levelIndex))
       true
     else
       false
 
-  private var _board: Board = buildBoard(levels(_levelIndex))
+  private def buildBoard(level: Level): Board = {
+  val size   = level.size
+  val needed = (size.rows * size.cols) / level.difficulty.matchAmount
 
-  private def buildBoard(level: Level): Board =
-    Board(Vector.empty)
+  val symbols =
+    LazyList.continually(theme.symbols).flatten.take(needed).toVector
 
-  def save(): GameMemento = GameMemento(_board)
-  def restore(m: GameMemento): Unit = _board = m.board
+  val deck  = Random.shuffle(symbols ++ symbols)
+  val cards = deck.zipWithIndex.map { case (s, i) => Card(i, s) }.toVector
+
+  Board(cards)
+}
