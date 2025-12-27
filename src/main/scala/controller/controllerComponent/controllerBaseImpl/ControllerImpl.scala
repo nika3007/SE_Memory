@@ -1,15 +1,11 @@
 package controller.controllerComponent.controllerBaseImpl
 
-import controller.*
 import controller.controllerComponent.{ControllerAPI, GameStatus, Command}
 import model.*
 import model.modelComponent.MemoryGameAPI
 import util.Observable
+
 import scala.util.Try
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, ExecutionContext}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 final class ControllerImpl(private val _game: MemoryGameAPI)
   extends Observable
@@ -27,27 +23,15 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
 
   private var undoStack: List[Command] = Nil
   private var redoStack: List[Command] = Nil
-  private var aiBusy = false
 
   override def aiEnabled: Boolean =
     !game.ai.isInstanceOf[NoAI]
-
-  private def maybeRunAITurn(): Unit =
-    if aiEnabled && _currentPlayer == "ai" && !aiBusy then
-      aiBusy = true
-      Future {
-        Thread.sleep(400)
-        execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
-        Thread.sleep(700)
-        execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
-        aiBusy = false
-      }
 
   private def execute(cmd: Command): Unit =
     cmd.doStep()
     undoStack = cmd :: undoStack
     redoStack = Nil
-    // do NOT notify here; the command/controller will notify at the right times
+    // do NOT notify here; we notify inside handleCardSelection at the right moments
 
   override def undo(): Unit =
     undoStack match
@@ -94,6 +78,7 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
         notifyObservers
         true
 
+  // AI uses the same command path; the TUI may call these
   override def aiTurnFirst(): Unit =
     if currentPlayer != "ai" then return
     execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
@@ -102,7 +87,37 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
     if currentPlayer != "ai" then return
     execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
 
+  private def switchPlayerAfterMismatch(): Unit =
+    _currentPlayer =
+      game.ai match
+        case _: NoAI => "human"
+        case _ => if _currentPlayer == "human" then "ai" else "human"
 
+  private def advanceLevelIfPossible(): Unit =
+    // show LevelComplete first (observers can print it)
+    _gameStatus = GameStatus.LevelComplete
+    notifyObservers
+
+    // try to advance
+    val hasNext = game.nextLevel()
+
+    if hasNext then
+      // prevent "redo/undo into last level"
+      undoStack = Nil
+      redoStack = Nil
+
+      // new level should accept input again
+      _currentPlayer = "human"
+      _gameStatus = GameStatus.NextRound
+      notifyObservers
+    else
+      // game finished on last level
+      _currentPlayer = "human"
+      // keep LevelComplete; views can interpret this as "game won"
+      _gameStatus = GameStatus.LevelComplete
+      notifyObservers
+
+  // visible to ChooseCardCommand (component boundary)
   private[controllerComponent] def handleCardSelection(i: Int): Unit =
     val oldBoard = board
     val (nextBoard, result) = board.choose(i)
@@ -113,29 +128,40 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
       notifyObservers
       return
 
+    // apply the new board state (card flipped)
     game.board = nextBoard
 
     result match
       case None =>
+        // first card flipped
         _gameStatus = GameStatus.FirstCard
         notifyObservers
 
       case Some(true) =>
-  _gameStatus = GameStatus.Match
-  notifyObservers
-  maybeRunAITurn()
+        // second card flipped + match
+        _gameStatus = GameStatus.Match
+        notifyObservers
 
-  if game.board.cards.forall(_.isMatched) then
-    _gameStatus = GameStatus.LevelComplete
-    notifyObservers
+        // if level completed, controller advances level (works for GUI AND TUI)
+        if game.board.cards.forall(_.isMatched) then
+          advanceLevelIfPossible()
 
-    val hasNext = game.nextLevel()
+      case Some(false) =>
+        // second card flipped + no match -> show it FIRST
+        _gameStatus = GameStatus.NoMatch
+        notifyObservers
 
-    if hasNext then
-      _gameStatus = GameStatus.NextRound
-      _currentPlayer = "human"
-      notifyObservers
-    else
-      _currentPlayer = "human"
-      notifyObservers
-      maybeRunAITurn()
+        Thread.sleep(1500)
+
+        // flip back down
+        val resetBoard = game.board.copy(
+          cards = game.board.cards.map {
+            case c if c.isFaceUp && !c.isMatched => c.flip
+            case c => c
+          }
+        )
+        game.board = resetBoard
+
+        _gameStatus = GameStatus.NextRound
+        switchPlayerAfterMismatch()
+        notifyObservers
