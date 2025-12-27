@@ -108,7 +108,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
 
         // --- AI TURN ----------------------------------------------------
-        else if controller.aiEnabled then
+       /* else if controller.aiEnabled then
 
           // >>> FIX 2: Kein "AI ist dran!" direkt nach Levelstart
           if !levelJustStarted then
@@ -130,10 +130,10 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
           // >>> FIX 2: Nach dem ersten AI-Zug im neuen Level wieder normal drucken
           levelJustStarted = false
-
+          */
 
       // --- LEVEL DONE -> next Level ---------------------------------------------------
-      if controller.game.nextLevel() then
+      /*if controller.game.nextLevel() then
         val lvl = controller.game.currentLevelIndex
 
         println(s"Next level: $lvl / ${controller.game.levelsCount}")
@@ -159,7 +159,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
           println("🤖 Die AI hat das ganze Spiel gewonnen! 🎉")
 
         println()
-
+        */
 
   //Observer-Update-Methode:
   override def update: Boolean =
@@ -203,8 +203,14 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
         println()
         //println(renderer.render(controller.board))
 
+      case GameStatus.LevelComplete =>
+        println()
+        println("✅ Level complete! Next level...\n")
+        // println(renderer.render(controller.board))
+        // println()
+
       case GameStatus.Idle =>
-        () // nichts drucken
+        () //// nichts drucken
 
     //controller.gameStatus = GameStatus.Idle //Nach jeder Ausgabe setzt die TUI den Status zurück, verhindert doppelte Nachrichten
     true

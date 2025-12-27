@@ -1,13 +1,15 @@
 package controller.controllerComponent.controllerBaseImpl
 
 import controller.*
-import controller.controllerComponent.ControllerAPI
+import controller.controllerComponent.{ControllerAPI, GameStatus, Command}
 import model.*
 import model.modelComponent.MemoryGameAPI
 import util.Observable
 import scala.util.Try
-import controller.controllerComponent.GameStatus
-
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 final class ControllerImpl(private val _game: MemoryGameAPI)
   extends Observable
@@ -23,47 +25,67 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
 
   override def board: Board = game.board
 
-  // command stacks for undo/redo
   private var undoStack: List[Command] = Nil
   private var redoStack: List[Command] = Nil
+  private var aiBusy = false
 
   override def aiEnabled: Boolean =
     !game.ai.isInstanceOf[NoAI]
+
+  private def maybeRunAITurn(): Unit =
+    if aiEnabled && _currentPlayer == "ai" && !aiBusy then
+      aiBusy = true
+      Future {
+        Thread.sleep(400)
+        execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
+        Thread.sleep(700)
+        execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
+        aiBusy = false
+      }
 
   private def execute(cmd: Command): Unit =
     cmd.doStep()
     undoStack = cmd :: undoStack
     redoStack = Nil
-    notifyObservers
+    // do NOT notify here; the command/controller will notify at the right times
 
-  override def undo(): Unit = undoStack match
-    case cmd :: rest =>
-      undoStack = rest
-      cmd.undoStep()
-      redoStack = cmd :: redoStack
-      notifyObservers
-    case Nil =>
-      println("Nothing to undo")
+  override def undo(): Unit =
+    undoStack match
+      case cmd :: rest =>
+        undoStack = rest
+        cmd.undoStep()
+        redoStack = cmd :: redoStack
+        notifyObservers
+      case Nil =>
+        println("Nothing to undo")
 
-  override def redo(): Unit = redoStack match
-    case cmd :: rest =>
-      redoStack = rest
-      cmd.doStep()
-      undoStack = cmd :: undoStack
-      notifyObservers
-    case Nil =>
-      println("Nothing to redo")
+  override def redo(): Unit =
+    redoStack match
+      case cmd :: rest =>
+        redoStack = rest
+        cmd.doStep()
+        undoStack = cmd :: undoStack
+        notifyObservers
+      case Nil =>
+        println("Nothing to redo")
 
   override def processInput(input: String): Boolean =
     if input == null || input.trim.isEmpty then return false
 
-    if input.trim.equalsIgnoreCase("u") then { undo(); return true }
-    if input.trim.equalsIgnoreCase("r") then { redo(); return true }
+    val trimmed = input.trim
+
+    if trimmed.equalsIgnoreCase("u") then
+      undo()
+      return true
+
+    if trimmed.equalsIgnoreCase("r") then
+      redo()
+      return true
 
     // ignore human input when AI is active
     if currentPlayer == "ai" then return true
 
-    Try(input.toInt).toOption match
+    Try(trimmed.toInt).toOption match
       case Some(i) if i >= 0 && i < board.cards.size =>
         execute(new ChooseCardCommand(this, i))
         true
@@ -72,7 +94,6 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
         notifyObservers
         true
 
-  // AI uses the same command path
   override def aiTurnFirst(): Unit =
     if currentPlayer != "ai" then return
     execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
@@ -81,14 +102,15 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
     if currentPlayer != "ai" then return
     execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
 
-  // make this visible to Command (same package boundary as before)
+
   private[controllerComponent] def handleCardSelection(i: Int): Unit =
     val oldBoard = board
     val (nextBoard, result) = board.choose(i)
 
-    val invalid = (nextBoard eq oldBoard) && result.isEmpty
+    val invalid = nextBoard.eq(oldBoard) && result.isEmpty
     if invalid then
       _gameStatus = GameStatus.InvalidSelection(i)
+      notifyObservers
       return
 
     game.board = nextBoard
@@ -96,28 +118,24 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
     result match
       case None =>
         _gameStatus = GameStatus.FirstCard
+        notifyObservers
 
       case Some(true) =>
-        if game.board.cards.forall(_.isMatched) then
-          _gameStatus = GameStatus.LevelComplete
-          game.nextLevel()
-          _currentPlayer = "human"
-        else
-          _gameStatus = GameStatus.Match
+  _gameStatus = GameStatus.Match
+  notifyObservers
+  maybeRunAITurn()
 
-      case Some(false) =>
-        _gameStatus = GameStatus.NoMatch
-        Thread.sleep(1500)
-        val resetBoard = board.copy(
-          cards = board.cards.map {
-            case c if c.isFaceUp && !c.isMatched => c.flip
-            case c => c
-          }
-        )
-        game.board = resetBoard
-        _gameStatus = GameStatus.NextRound
+  if game.board.cards.forall(_.isMatched) then
+    _gameStatus = GameStatus.LevelComplete
+    notifyObservers
 
-        _currentPlayer =
-          game.ai match
-            case _: NoAI => "human"
-            case _ => if _currentPlayer == "human" then "ai" else "human"
+    val hasNext = game.nextLevel()
+
+    if hasNext then
+      _gameStatus = GameStatus.NextRound
+      _currentPlayer = "human"
+      notifyObservers
+    else
+      _currentPlayer = "human"
+      notifyObservers
+      maybeRunAITurn()
