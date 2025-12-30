@@ -1,9 +1,14 @@
-package controller
+package controller.controllerComponent
 
 import model.{Board, Card, MemoryGame, Level, BoardSizes, Difficulties, ThemeFactory, RandomAI, NoAI}
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 import scala.collection.mutable
+import controller.controllerComponent.ControllerAPI 
+
+import controller.controllerComponent.controllerBaseImpl.ControllerImpl
+
+import controller.controllerComponent.GameStatus
 
 final class ControllerSpec extends AnyWordSpec with Matchers {
 
@@ -16,17 +21,17 @@ final class ControllerSpec extends AnyWordSpec with Matchers {
       Card(3, "B")
     ))
 
-  private def freshControllerWithBoard(): Controller =
+  private def freshControllerWithBoard(): ControllerImpl =
     val theme = ThemeFactory.getTheme("fruits")
     val ai = RandomAI()
     val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
     val game = MemoryGame(theme, ai, Vector(level))
-    val c = Controller(game)
+    val c = ControllerImpl(game)
     c.game.board = smallBoard()
     c
 
   // NEU: Hilfsfunktion um currentPlayer zu setzen (reflection)
-  private def setCurrentPlayer(controller: Controller, player: String): Unit = {
+  private def setCurrentPlayer(controller: ControllerImpl, player: String): Unit = {
     val field = controller.getClass.getDeclaredField("currentPlayer")
     field.setAccessible(true)
     field.set(controller, player)
@@ -148,7 +153,7 @@ final class ControllerSpec extends AnyWordSpec with Matchers {
       val ai = NoAI()
       val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
       val game = MemoryGame(theme, ai, Vector(level))
-      val c2 = Controller(game)
+      val c2 = ControllerImpl(game)
       c2.aiEnabled shouldBe false
     }
 
@@ -199,7 +204,7 @@ final class ControllerSpec extends AnyWordSpec with Matchers {
       val ai = NoAI()
       val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
       val game = MemoryGame(theme, ai, Vector(level))
-      val c = Controller(game)
+      val c = ControllerImpl(game)
       c.game.board = smallBoard()
       
       val field = c.getClass.getDeclaredField("currentPlayer")

@@ -2,6 +2,7 @@ package aview
 
 import util.{AsciiRenderer, BoardRenderer}
 import controller.Controller
+import controller.controllerComponent.ControllerAPI
 import model.{Board, Card, Level, BoardSizes, Difficulties, MemoryGame, ThemeFactory, RandomAI}
 
 import org.scalatest.wordspec.AnyWordSpec
@@ -14,13 +15,13 @@ class MemoryTuiSpec extends AnyWordSpec with Matchers {
   private val renderer = AsciiRenderer()
 
   // Hilfsfunktion für alten Tests
-  private def testControllerWithBoard(board: Board): Controller =
+  private def testControllerWithBoard(board: Board): ControllerAPI =
     val theme = ThemeFactory.getTheme("fruits")
     val ai = RandomAI()
     val level = Level(BoardSizes.Medium4x4, Difficulties.Easy)
     val game = MemoryGame(theme, ai, Vector(level))
-    val c = Controller(game)
-    c.game.board = board
+    val c: ControllerAPI = Controller(game)
+    // ❗ KEIN c.game.board = board
     c
 
 

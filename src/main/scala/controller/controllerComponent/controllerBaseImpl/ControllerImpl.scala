@@ -151,17 +151,24 @@ final class ControllerImpl(private val _game: MemoryGameAPI)
         _gameStatus = GameStatus.NoMatch
         notifyObservers
 
-        Thread.sleep(1500)
+        
+        //Thread.sleep(1500)
+        new Thread(() => {
+          Thread.sleep(1500)
 
-        // flip back down
-        val resetBoard = game.board.copy(
-          cards = game.board.cards.map {
-            case c if c.isFaceUp && !c.isMatched => c.flip
-            case c => c
-          }
-        )
-        game.board = resetBoard
+          // flip back down
+          val resetBoard = game.board.copy(
+            cards = game.board.cards.map {
+              case c if c.isFaceUp && !c.isMatched => c.flip
+              case c => c
+            }
+          )
+          game.board = resetBoard
 
-        _gameStatus = GameStatus.NextRound
-        switchPlayerAfterMismatch()
-        notifyObservers
+          _currentPlayer =
+            if game.ai.isInstanceOf[NoAI] then "human"
+            else if _currentPlayer == "human" then "ai" else "human"
+
+          _gameStatus = GameStatus.NextRound
+          notifyObservers
+        }).start()

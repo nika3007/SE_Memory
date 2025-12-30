@@ -230,8 +230,26 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
             }
           }).start()
 
-        case status if status.toString.contains("NoMatch") =>
-          statusLabel.textFill = Color.Red
+        //case GameStatus.NoMatch =>
+          //statusLabel.textFill = Color.Red
+
+/*
+          // Verzögertes Zurückdrehen der Karten (GUI-seitig!)
+          new Thread(() => {
+            Thread.sleep(1500)
+            Platform.runLater {
+              val resetBoard = controller.board.copy(
+                cards = controller.board.cards.map {
+                  case c if c.isFaceUp && !c.isMatched => c.flip
+                  case c => c
+                }
+              )
+              controller.game.board = resetBoard
+              controller.notifyObservers
+            }
+          }).start()
+
+          */
 
         case _ =>
           statusLabel.textFill = Color.DarkBlue
