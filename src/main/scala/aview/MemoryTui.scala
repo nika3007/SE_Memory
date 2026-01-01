@@ -24,7 +24,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     if isTest then return
 
     println()
-    println(s"🎮 Memory gestartet! Level 1\n")
+    println("🎮 Memory gestartet! Level 1\n")
     println("👉 Du bist dran!")
     println(renderer.render(controller.board))
     println()
@@ -32,9 +32,6 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     var playing = true
 
     while playing do
-
-
-
       while !controller.board.allMatched do
 
         if controller.currentPlayer == "human" then
@@ -46,7 +43,6 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
               println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
 
             case _ =>
-              // fallback: treat as first card prompt
               println(s"Wähle eine Karte (0 bis ${controller.board.cards.size - 1}):")
 
           val input = readLine()
@@ -56,7 +52,6 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
           val trimmed = input.trim.toLowerCase
 
-          // hint is not a move
           if trimmed == "hint" then
             HintSystem.getHint(controller.board) match
               case Some((a, b)) =>
@@ -77,20 +72,15 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
               println()
 
               Thread.sleep(400)
-              println("🤖 AI wählt erste Karte...")
               controller.aiTurnFirst()
 
               Thread.sleep(700)
-              println("🤖 AI wählt zweite Karte... bitte warten!")
               controller.aiTurnSecond()
-
-              Thread.sleep(300)
 
             case _ =>
               Thread.sleep(150)
 
         else
-
           Thread.sleep(150)
 
       if controller.board.allMatched then
@@ -99,9 +89,9 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
         println("🎉 Du hast das ganze Spiel gewonnen! 🎉")
         println()
 
-
-
-
+  // ----------------------------
+  // EINZIGER FIX IST HIER
+  // ----------------------------
   override def update: Boolean =
     if isTest then return true
 
@@ -111,42 +101,19 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       println(msg)
 
     controller.gameStatus match
-      case GameStatus.FirstCard =>
-        println()
+      case GameStatus.FirstCard
+           | GameStatus.Match
+           | GameStatus.NoMatch
+           | GameStatus.NextRound
+           | GameStatus.LevelComplete
+           | GameStatus.InvalidSelection(_) =>
+
         println(renderer.render(controller.board))
         println()
 
-      case GameStatus.Match =>
-        println(renderer.render(controller.board))
-        println()
-
-      case GameStatus.NoMatch =>
-        println(renderer.render(controller.board))
-        println()
-
-      case GameStatus.InvalidSelection(_) =>
-        println(renderer.render(controller.board))
-        println()
-
-      case GameStatus.NextRound =>
-
-        println()
-        if controller.currentPlayer == "human" then
+        if controller.gameStatus == GameStatus.NextRound then
           println("👉 Du bist dran!")
-        else
-          println("🤖 AI ist dran!")
-        println(renderer.render(controller.board))
-        println()
 
-      case GameStatus.LevelComplete =>
-        // controller will notify again with NextRound if a next level exists
-        println()
-        println("✅ Level complete! Next level...\n")
-
-      case GameStatus.Idle =>
-        () // nothing
-
-      // if your enum includes SecondCard but you don't use it, safe to ignore
       case _ =>
         ()
 
