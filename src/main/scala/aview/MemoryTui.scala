@@ -1,9 +1,7 @@
 package aview
 
 import controller.controllerComponent.{ControllerAPI, GameStatus}
-import util.Observer
-import util.HintSystem
-import util.{AsciiRenderer, BoardRenderer}
+import util.{AsciiRenderer, BoardRenderer, Observer, HintSystem}
 
 import scala.io.StdIn.readLine
 
@@ -16,7 +14,6 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
   private val renderer: BoardRenderer = AsciiRenderer()
 
-  // Test-friendly input
   def processInputLine(input: String): Unit =
     controller.processInput(input)
 
@@ -24,26 +21,25 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     if isTest then return
 
     println()
-    println("🎮 Memory gestartet! Level 1\n")
+    println("🎮 Memory gestartet!")
     println("👉 Du bist dran!")
     println(renderer.render(controller.board))
     println()
 
-    var playing = true
+    while true do
+      controller.currentPlayer match
 
-    while playing do
-      while !controller.board.allMatched do
+        // ---------------- HUMAN ----------------
+        case "human" if controller.gameStatus != GameStatus.NoMatch =>
 
-        if controller.currentPlayer == "human" then
           controller.gameStatus match
-            case GameStatus.Idle | GameStatus.NextRound | GameStatus.Match =>
+            case GameStatus.Idle | GameStatus.Match | GameStatus.NextRound =>
               println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
 
             case GameStatus.FirstCard =>
               println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
 
-            case _ =>
-              println(s"Wähle eine Karte (0 bis ${controller.board.cards.size - 1}):")
+            case _ => ()
 
           val input = readLine()
           if input == null then
@@ -64,7 +60,8 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
               println("\nSpiel beendet durch Eingabeabbruch. Bye👋\n")
               return
 
-        else if controller.aiEnabled then
+        // ---------------- AI ----------------
+        case "ai" =>
           controller.gameStatus match
             case GameStatus.Idle | GameStatus.NextRound | GameStatus.Match =>
               println("🤖 AI ist dran!")
@@ -78,20 +75,12 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
               controller.aiTurnSecond()
 
             case _ =>
-              Thread.sleep(150)
+              Thread.sleep(100)
 
-        else
-          Thread.sleep(150)
+        case _ =>
+          Thread.sleep(100)
 
-      if controller.board.allMatched then
-        playing = false
-        println()
-        println("🎉 Du hast das ganze Spiel gewonnen! 🎉")
-        println()
-
-  // ----------------------------
-  // EINZIGER FIX IST HIER
-  // ----------------------------
+  // ---------------- OBSERVER ----------------
   override def update: Boolean =
     if isTest then return true
 
@@ -103,18 +92,21 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     controller.gameStatus match
       case GameStatus.FirstCard
            | GameStatus.Match
-           | GameStatus.NoMatch
-           | GameStatus.NextRound
-           | GameStatus.LevelComplete
-           | GameStatus.InvalidSelection(_) =>
-
+           | GameStatus.NoMatch =>
         println(renderer.render(controller.board))
         println()
 
-        if controller.gameStatus == GameStatus.NextRound then
-          println("👉 Du bist dran!")
+      case GameStatus.NextRound =>
+        println("nächste Runde...")
+        println(renderer.render(controller.board))
+        println()
 
-      case _ =>
-        ()
+      case GameStatus.LevelComplete =>
+        println()
+        println("✅ Level complete! Next level...\n")
+        println(renderer.render(controller.board))
+        println()
+
+      case _ => ()
 
     true
