@@ -19,3 +19,7 @@ trait MemoryGameAPI:
   def restore(m: GameMemento): Unit
 
   def nextLevel(): Boolean
+
+  def setTheme(name: String): Unit
+  def setAI(name: String): Unit
+

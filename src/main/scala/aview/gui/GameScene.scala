@@ -1,10 +1,10 @@
-package aview
+package aview.gui
 
 import controller.controllerComponent.ControllerAPI
 import scalafx.application.{JFXApp3, Platform}
 import scalafx.scene.Scene
 import scalafx.scene.layout.{BorderPane, GridPane, HBox, VBox}
-import scalafx.scene.control.{Button, Label, Menu, MenuBar, MenuItem}
+import scalafx.scene.control.{Button, Label, Menu, MenuBar, MenuItem, ScrollPane}
 import scalafx.geometry.{Insets, Pos}
 import scalafx.scene.paint.Color
 import scalafx.scene.text.Font
@@ -16,46 +16,52 @@ import controller.controllerComponent.GameStatus
 import model.*
 import util.HintSystem
 
-class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
+
+case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int)
+  extends Observer:
 
   controller.add(this)
 
-  @volatile private var aiRunning: Boolean = false
-
   private val grid = new GridPane()
+
   private val statusLabel = new Label("Willkommen zu Memory!") {
     font = Font("Arial", 18)
     textFill = Color.DarkBlue
   }
+
   private val playerLabel = new Label("Spieler: Mensch") {
     font = Font("Arial", 14)
     textFill = Color.DarkGreen
   }
-  private val levelLabel = new Label("Level: 1") {
+
+  private val levelLabel = new Label(s"Level: ${levelIndex + 1}") {
     font = Font("Arial", 14)
     textFill = Color.DarkRed
   }
 
-  override def start(): Unit =
-    stage = new JFXApp3.PrimaryStage {
-      title = "Memory – ScalaFX"
-      width = 900
-      height = 750
+  val scene: Scene = new Scene {
+    root = new BorderPane {
 
-      scene = new Scene {
-        root = buildRoot()
-      }
-    }
-
-    drawBoard()
-    updateStatus()
-
-  private def buildRoot(): BorderPane =
-    new BorderPane {
+      // ---------------- MENU OBEN ----------------
       top = buildMenu()
-      center = grid
+
+      // ---------------- CENTER (ScrollPane) ----------------
+      center = new ScrollPane {
+        fitToWidth = true
+        content = buildBoardWithCoordinates()
+      }
+
+      // ---------------- STATUS UNTEN ----------------
       bottom = buildStatusBar()
     }
+  }
+
+  drawBoard()
+  updateStatus()
+
+  // ---------------------------------------------------------
+  // MENU
+  // ---------------------------------------------------------
 
   private def buildMenu(): MenuBar =
     new MenuBar {
@@ -63,11 +69,19 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
         new Menu("Spiel") {
           items = List(
             new MenuItem("Hint anzeigen") {
-              onAction = _ => showHint()
+              onAction = _ => controller.processInput("hint")
             },
             new MenuItem("Rückgängig (Undo)") {
-              onAction = _ =>
-                controller.undo()
+              onAction = _ => controller.undo()
+            },
+            new MenuItem("Wiederholen (Redo)") {
+              onAction = _ => controller.redo()
+            },
+            new MenuItem("Levelübersicht") {
+              onAction = _ => gui.showLevelSelect()
+            },
+            new MenuItem("Menü") {
+              onAction = _ => gui.showStartMenu()
             },
             new MenuItem("Beenden") {
               onAction = _ => Platform.exit()
@@ -77,11 +91,17 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       )
     }
 
+  // ---------------------------------------------------------
+  // STATUS
+  // ---------------------------------------------------------
+
   private def buildStatusBar(): VBox =
     new VBox {
       spacing = 5
       padding = Insets(10)
       alignment = Pos.CenterLeft
+      maxWidth = 600
+
       children = Seq(
         statusLabel,
         new HBox {
@@ -91,7 +111,51 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
       )
     }
 
-  // ---------------- BOARD --------------------
+  // ---------------------------------------------------------
+  // BOARD + KOORDINATEN
+  // ---------------------------------------------------------
+
+  private def buildBoardWithCoordinates(): VBox =
+    val b = controller.board
+    val (rows, cols) = calculateBoardSize(b)
+
+    val columnLabels = new HBox {
+      spacing = 10
+      alignment = Pos.Center
+      maxWidth = 600
+      children = (0 until cols).map(c => new Label(c.toString) {
+        font = Font("Arial", 18)
+        textFill = Color.DarkGray
+      })
+    }
+
+    val rowLabels = new VBox {
+      spacing = 10
+      alignment = Pos.Center
+      children = (0 until rows).map(r => new Label(r.toString) {
+        font = Font("Arial", 18)
+        textFill = Color.DarkGray
+      })
+    }
+
+    new VBox {
+      spacing = 10
+      alignment = Pos.Center
+      padding = Insets(20)
+      maxWidth = 600
+      children = Seq(
+        columnLabels,
+        new HBox {
+          spacing = 10
+          alignment = Pos.Center
+          children = Seq(rowLabels, grid)
+        }
+      )
+    }
+
+  // ---------------------------------------------------------
+  // BOARD ZEICHNEN
+  // ---------------------------------------------------------
 
   private def drawBoard(): Unit =
     val b = controller.board
@@ -110,7 +174,8 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
           val card = b.cards(i)
 
           val button = new Button {
-            prefWidth = 100
+            maxWidth = Double.MaxValue
+            minWidth = 100
             prefHeight = 120
             font = Font("Arial", 24)
 
@@ -118,10 +183,12 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
               style = "-fx-background-color: #90EE90; -fx-border-color: #228B22; -fx-border-width: 3;"
               text = "✓ " + card.symbol
               textFill = Color.DarkGreen
+
             else if card.isFaceUp then
               style = "-fx-background-color: #FFFACD; -fx-border-color: #DAA520; -fx-border-width: 2;"
               text = card.symbol
               textFill = Color.Black
+
             else
               style = "-fx-background-color: linear-gradient(to bottom, #4169E1, #00008B); -fx-border-color: #191970; -fx-border-width: 2;"
               text = "?"
@@ -144,14 +211,18 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
           GridPane.setColumnIndex(button, c)
           grid.children.add(button)
 
+  // ---------------------------------------------------------
+  // BOARD-GRÖSSE (KORREKT!)
+  // ---------------------------------------------------------
+
   private def calculateBoardSize(board: Board): (Int, Int) =
     val total = board.cards.length
-    if total <= 4 then (2, 2)
-    else if total <= 16 then (4, 4)
-    else if total <= 36 then (6, 6)
-    else (8, 8)
+    val side = math.sqrt(total).toInt
+    (side, side)
 
-  // ---------------- STATUS --------------------
+  // ---------------------------------------------------------
+  // STATUS UPDATE
+  // ---------------------------------------------------------
 
   private def updateStatus(): Unit =
     val msg = GameStatus.message(controller.gameStatus)
@@ -162,54 +233,14 @@ class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
 
     val lvl = controller.game.currentLevelIndex + 1
     levelLabel.text = s"Level: $lvl"
-    stage.title = s"Memory – Level $lvl"
 
-  // ---------------- HINT --------------------
-
-  private def showHint(): Unit =
-    HintSystem.getHint(controller.board) match
-      case Some((a, b)) =>
-        statusLabel.text = s"💡 Tipp: Paar → Karte $a und $b!"
-      case None =>
-        statusLabel.text = "💡 Kein sicheres Paar bekannt."
-
-  // ---------------- AI LOGIC --------------------
-
-  private def runAI(): Unit =
-    val status = controller.gameStatus
-
-    // AI nur starten, wenn:
-    // - AI dran ist
-    // - kein AI-Thread gerade läuft
-    // - der Status einer von: Idle, NextRound, Match
-    if controller.currentPlayer == "ai"
-       && !aiRunning
-       && (status == GameStatus.Idle
-           || status == GameStatus.NextRound
-           || status == GameStatus.Match)
-    then
-      aiRunning = true
-
-      new Thread(() =>
-        Thread.sleep(400)
-        controller.aiTurnFirst()
-
-        Thread.sleep(700)
-        controller.aiTurnSecond()
-
-        aiRunning = false
-      ).start()
-
-
-
-  // ---------------- OBSERVER --------------------
+  // ---------------------------------------------------------
+  // OBSERVER
+  // ---------------------------------------------------------
 
   override def update: Boolean =
     Platform.runLater {
       drawBoard()
       updateStatus()
-      runAI() // <-- AI wird hier gestartet
     }
     true
-
-end GUI

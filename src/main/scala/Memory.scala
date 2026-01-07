@@ -2,7 +2,8 @@ import com.google.inject.Guice
 import scalafx.application.Platform
 import scala.io.StdIn.readLine
 
-import aview.{MemoryTui, GUI}
+import aview.MemoryTui
+import aview.gui.GUI
 import controller.controllerComponent.ControllerAPI
 import model._
 import model.modelComponent.implModel.MemoryGameImpl
@@ -24,23 +25,30 @@ object Memory {
       case _   => "tui"
 
     // 2) Theme
-    println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
-    val themeName = readLine().trim
-    val theme = ThemeFactory.getTheme(
-      if themeName.nonEmpty then themeName else "fruits"
-    )
+    // Theme & AI nur bei TUI abfragen
+    val (theme, ai) =
+      if mode == "tui" then
+        println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
+        val themeName = readLine().trim
+        val theme = ThemeFactory.getTheme(
+          if themeName.nonEmpty then themeName else "fruits"
+        )
 
-    // 3) AI
-    println("Choose AI level: none / easy / medium / hard / pro")
-    val ai = readLine().trim.toLowerCase match
-      case "none"   => NoAI()
-      case "easy"   => RandomAI()
-      case "medium" => MediumAI()
-      case "hard"   => HardAI()
-      case "pro"    => MemoryAI()
-      case _        => RandomAI()
+        println("Choose AI level: none / easy / medium / hard / pro")
+        val ai = readLine().trim.toLowerCase match
+          case "none"   => NoAI()
+          case "easy"   => RandomAI()
+          case "medium" => MediumAI()
+          case "hard"   => HardAI()
+          case "pro"    => MemoryAI()
+          case _        => RandomAI()
 
-    // 4) Levels
+        (theme, ai)
+      else
+        // GUI setzt Theme & AI später
+        (ThemeFactory.getTheme("fruits"), RandomAI())
+
+    // 3) Levels
     val levels = Vector(
       Level(BoardSizes.Small2x2, Difficulties.Easy),
       Level(BoardSizes.Medium4x4, Difficulties.Easy),
@@ -48,26 +56,22 @@ object Memory {
       Level(BoardSizes.Large6x6, Difficulties.Easy)
     )
 
-    // 5) Game
-    val game = new MemoryGameImpl(theme, ai, levels)
-
-
-    // 6) Dependency Injection
+    // 4) Dependency Injection
     val injector = Guice.createInjector(new MemoryModule(theme, ai, levels))
     val controller = injector.getInstance(classOf[ControllerAPI])
 
 
-    // 7) Views
+    // 5) Views
     mode match
       case "gui" =>
         Platform.startup(() => {})
-        GUI(controller).main(Array())
+        new GUI(controller).main(Array())
 
       case "both" =>
         // GUI im eigenen Thread (WICHTIG!)
         new Thread(() => {
           Platform.startup(() => {})
-          GUI(controller).main(Array())
+          new GUI(controller).main(Array())
         }).start()
 
         // TUI im Hauptthread
