@@ -7,7 +7,10 @@ import util.Observable
 
 import scala.util.Try
 
-final class ControllerImpl(private val _game: MemoryGameAPI)
+import com.google.inject.Inject
+
+final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
+
   extends Observable
   with ControllerAPI:
 

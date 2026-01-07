@@ -80,9 +80,11 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
               println()
 
               Thread.sleep(400)
+              println("🤖 AI wählt 1. Karte...\n")
               controller.aiTurnFirst()
 
               Thread.sleep(700)
+              println("🤖 AI wählt 2. Karte...\n")
               controller.aiTurnSecond()
 
             case _ =>

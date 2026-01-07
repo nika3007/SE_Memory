@@ -51,10 +51,11 @@ object Memory {
     // 5) Game
     val game = new MemoryGameImpl(theme, ai, levels)
 
+
     // 6) Dependency Injection
-    val injector = Guice.createInjector(new MemoryModule(game))
-    val controller: ControllerAPI =
-      injector.getInstance(classOf[ControllerAPI])
+    val injector = Guice.createInjector(new MemoryModule(theme, ai, levels))
+    val controller = injector.getInstance(classOf[ControllerAPI])
+
 
     // 7) Views
     mode match
