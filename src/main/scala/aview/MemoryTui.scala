@@ -14,14 +14,47 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
   private val renderer: BoardRenderer = AsciiRenderer()
 
-  def processInputLine(input: String): Unit =
-    controller.processInput(input)
+  private var lastStatus: Option[GameStatus] = None
+
+  private def handleHumanInput(): Unit =
+    val input =
+      try readLine()
+      catch
+        case _: Throwable =>
+          println("\nSpiel beendet durch Eingabeabbruch. Bye👋\n")
+          System.exit(0)
+          null
+
+    if input == null || input.trim.isEmpty then
+      println("\nSpiel beendet durch Eingabeabbruch. Bye👋\n")
+      System.exit(0)
+
+    val trimmed = input.trim.toLowerCase
+
+    if trimmed == "u" || trimmed == "undo" then
+      controller.undo()
+      return
+
+    if trimmed == "r" || trimmed == "redo" then
+      controller.redo()
+      return
+
+    if trimmed == "hint" then
+      HintSystem.getHint(controller.board) match
+        case Some((a, b)) =>
+          println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!\n")
+        case None =>
+          println("💡 Kein sicheres Paar bekannt.\n")
+      return
+
+    controller.processInput(trimmed)
 
   def run(): Unit =
     if isTest then return
 
     println()
     println("🎮 Memory gestartet!")
+    println()
     println("👉 Du bist dran!")
     println(renderer.render(controller.board))
     println()
@@ -29,38 +62,16 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     while true do
       controller.currentPlayer match
 
-        // ---------------- HUMAN ----------------
         case "human" if controller.gameStatus != GameStatus.NoMatch =>
-
           controller.gameStatus match
-            case GameStatus.Idle | GameStatus.Match | GameStatus.NextRound =>
-              println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
-
             case GameStatus.FirstCard =>
               println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
 
-            case _ => ()
+            case _ =>
+              println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
 
-          val input = readLine()
-          if input == null then
-            println("\nSpiel beendet durch Eingabeabbruch. Bye👋\n")
-            return
+          handleHumanInput()
 
-          val trimmed = input.trim.toLowerCase
-
-          if trimmed == "hint" then
-            HintSystem.getHint(controller.board) match
-              case Some((a, b)) =>
-                println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!\n")
-              case None =>
-                println("💡 Kein sicheres Paar bekannt.\n")
-          else
-            val cont = controller.processInput(input)
-            if !cont then
-              println("\nSpiel beendet durch Eingabeabbruch. Bye👋\n")
-              return
-
-        // ---------------- AI ----------------
         case "ai" =>
           controller.gameStatus match
             case GameStatus.Idle | GameStatus.NextRound | GameStatus.Match =>
@@ -80,16 +91,22 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
         case _ =>
           Thread.sleep(100)
 
-  // ---------------- OBSERVER ----------------
   override def update: Boolean =
     if isTest then return true
 
-    val msg = GameStatus.message(controller.gameStatus)
-    if msg.nonEmpty then
+    val status = controller.gameStatus
+
+    if lastStatus.contains(status) && status != GameStatus.Idle then
+      return true
+
+    lastStatus = Some(status)
+
+    val msg = GameStatus.message(status)
+    if msg.nonEmpty && status != GameStatus.NextRound then
       println()
       println(msg)
 
-    controller.gameStatus match
+    status match
       case GameStatus.FirstCard
            | GameStatus.Match
            | GameStatus.NoMatch =>
@@ -104,8 +121,9 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       case GameStatus.LevelComplete =>
         println()
         println("✅ Level complete! Next level...\n")
-        println(renderer.render(controller.board))
-        println()
+
+      case GameStatus.Idle =>
+        ()
 
       case _ => ()
 

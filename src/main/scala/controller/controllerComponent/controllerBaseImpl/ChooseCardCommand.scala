@@ -1,21 +1,29 @@
 package controller.controllerComponent.controllerBaseImpl
 
 import controller.controllerComponent.Command
-import model.GameMemento
-import scala.util.Try
+import controller.controllerComponent.GameStatus
+import model.Board
 
-final class ChooseCardCommand(controller: ControllerImpl, index: Int) extends Command:
+class ChooseCardCommand(controller: ControllerImpl, index: Int) extends Command:
 
-  private val before: GameMemento = controller.game.save()
+  private var beforeBoard: Board = null
+  private var beforePlayer: String = ""
+  private var beforeStatus: GameStatus = GameStatus.Idle
 
-  override def doStep(): Try[Unit] =
-    Try {
-      controller.handleCardSelection(index)
-      controller.notifyObservers
-    }
+  override def doStep(): Unit =
+    beforeBoard = controller.board.copy()
+    beforePlayer = controller.currentPlayer
+    beforeStatus = controller.gameStatus
 
-  override def undoStep(): Try[Unit] =
-    Try {
-      controller.game.restore(before)
-      controller.notifyObservers
-    }
+    controller.handleCardSelection(index)
+
+  override def undoStep(): Unit =
+    controller.cancelThread = true
+    controller.game.board = beforeBoard
+    controller._currentPlayer = beforePlayer
+    controller._gameStatus = beforeStatus
+    controller.notifyObservers
+
+  override def redoStep(): Unit =
+    controller.cancelThread = false
+    controller.handleCardSelection(index)
