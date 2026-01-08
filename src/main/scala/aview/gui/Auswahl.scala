@@ -1,150 +1,108 @@
 package aview.gui
 
-import scalafx.scene.Scene
-import scalafx.scene.layout.{BorderPane, VBox, HBox}
-import scalafx.scene.control.{Button, Label, Menu, MenuBar, MenuItem, ScrollPane}
+import scalafx.scene.layout.{BorderPane, VBox, HBox, FlowPane, Region, Priority}
+import scalafx.scene.control.{Button, Label}
 import scalafx.scene.text.Font
 import scalafx.geometry.{Insets, Pos}
 
 case class Auswahl(gui: GUI):
 
-  private var selectedTheme: String = "fruits"
-  private var selectedAI: String = "none"
+  private var selectedTheme = "fruits"
+  private var selectedAI = "none"
 
   private val themeButtons = scala.collection.mutable.Map.empty[String, Button]
   private val aiButtons = scala.collection.mutable.Map.empty[String, Button]
 
-  val scene = new Scene {
-    root = new BorderPane {
+  private def option(selected: Boolean, base: String, active: String) =
+    s"""
+    -fx-background-radius: 16;
+    -fx-padding: 12 32;
+    -fx-font-size: 16px;
+    -fx-text-fill: white;
+    -fx-background-color: ${if selected then active else base};
+    -fx-border-color: white;
+    -fx-border-width: ${if selected then 3 else 0};
+    """
 
-      top = new MenuBar {
-        menus = List(
-          new Menu("Spiel") {
-            items = List(
-              new MenuItem("Menü") {
-                onAction = _ => gui.showStartMenu()
-              },
-              new MenuItem("Beenden") {
-                onAction = _ => System.exit(0)
-              }
-            )
-          }
-        )
-      }
+  val root = new BorderPane {
+    style = "-fx-background-color: #f7f9fb;"
 
-      center = new ScrollPane {
-        fitToWidth = true
+    center = new VBox {
+      spacing = 35
+      padding = Insets(40)
+      alignment = Pos.Center
 
-        content = new VBox {
-          spacing = 30
-          alignment = Pos.Center
-          padding = Insets(40)
-          maxWidth = 600
+      children = Seq(
+        new Label("Theme auswählen") { font = Font("Arial", 26) },
+        buildThemeButtons(),
+        new Label("AI auswählen") { font = Font("Arial", 26) },
+        buildAIButtons()
+      )
+    }
 
-          children = Seq(
-            new Label("Theme auswählen") {
-              font = Font("Arial", 28)
-            },
-            buildThemeButtons(),
+    bottom = new HBox {
+      padding = Insets(20)
+      alignment = Pos.Center
 
-            new Label("AI auswählen") {
-              font = Font("Arial", 28)
-            },
-            buildAIButtons(),
+      val spacer = new Region()
+      HBox.setHgrow(spacer, Priority.Always)
 
-            new VBox {
-              spacing = 10
-              alignment = Pos.Center
-
-              children = Seq(
-                new Button("Weiter") {
-                  maxWidth = Double.MaxValue
-                  minWidth = 200
-                  prefHeight = 60
-                  font = Font("Arial", 26)
-                  style = "-fx-background-color: #2ecc71; -fx-text-fill: white;"
-                  onAction = _ =>
-                    gui.setTheme(selectedTheme)
-                    gui.setAI(selectedAI)
-                    gui.showLevelSelect()
-                },
-
-                new Button("Zurück") {
-                  maxWidth = Double.MaxValue
-                  minWidth = 200
-                  prefHeight = 40
-                  font = Font("Arial", 20)
-                  style = "-fx-background-color: #95a5a6; -fx-text-fill: white;"
-                  onAction = _ => gui.showStartMenu()
-                }
-              )
-            }
-          )
+      children = Seq(
+        new Button("⟵ Zurück") {
+          onAction = _ => gui.showStartMenu()
+        },
+        spacer,
+        new Button("Weiter ⟶") {
+          style = "-fx-background-color:#2ecc71;-fx-text-fill:white;-fx-padding:14 36;"
+          onAction = _ =>
+            gui.setTheme(selectedTheme)
+            gui.setAI(selectedAI)
+            gui.showGame(0)
         }
-      }
+      )
     }
   }
 
-  private def buildThemeButtons(): HBox =
-    val themes = Seq("fruits", "animals", "emoji", "sports", "vehicles", "flags", "landscape")
-
-    new HBox {
-      spacing = 10
+  private def buildThemeButtons(): FlowPane =
+    val themes = Seq("fruits", "animals", "emoji", "sports")
+    new FlowPane {
+      hgap = 22
       alignment = Pos.Center
-      maxWidth = 600
-
-      children = themes.map { name =>
-        val btn = new Button(name.capitalize) {
-          maxWidth = Double.MaxValue
-          minWidth = 120
-          font = Font("Arial", 18)
+      children = themes.map { t =>
+        val b = new Button(t.capitalize) {
+          style = option(t == selectedTheme, "#5dade2", "#2e86c1")
           onAction = _ =>
-            selectedTheme = name
-            updateThemeStyles()
+            selectedTheme = t
+            updateThemes()
         }
-        themeButtons(name) = btn
-        btn
+        themeButtons(t) = b
+        b
       }
-
-      updateThemeStyles()
     }
 
-  private def updateThemeStyles(): Unit =
-    themeButtons.foreach { case (name, btn) =>
-      if name == selectedTheme then
-        btn.style = "-fx-background-color: #2980b9; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 3;"
-      else
-        btn.style = "-fx-background-color: #3498db; -fx-text-fill: white;"
+  private def updateThemes(): Unit =
+    themeButtons.foreach { (n, b) =>
+      b.style = option(n == selectedTheme, "#5dade2", "#2e86c1")
     }
 
-  private def buildAIButtons(): HBox =
-    val ais = Seq("none", "easy", "medium", "hard", "pro")
-
-    new HBox {
-      spacing = 10
+  private def buildAIButtons(): FlowPane =
+    val ais = Seq("none", "easy", "medium", "hard")
+    new FlowPane {
+      hgap = 22
       alignment = Pos.Center
-      maxWidth = 600
-
-      children = ais.map { name =>
-        val btn = new Button(name.capitalize) {
-          maxWidth = Double.MaxValue
-          minWidth = 120
-          font = Font("Arial", 18)
+      children = ais.map { a =>
+        val b = new Button(a.capitalize) {
+          style = option(a == selectedAI, "#af7ac5", "#8e44ad")
           onAction = _ =>
-            selectedAI = name
-            updateAIStyles()
+            selectedAI = a
+            updateAI()
         }
-        aiButtons(name) = btn
-        btn
+        aiButtons(a) = b
+        b
       }
-
-      updateAIStyles()
     }
 
-  private def updateAIStyles(): Unit =
-    aiButtons.foreach { case (name, btn) =>
-      if name == selectedAI then
-        btn.style = "-fx-background-color: #8e44ad; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 3;"
-      else
-        btn.style = "-fx-background-color: #9b59b6; -fx-text-fill: white;"
+  private def updateAI(): Unit =
+    aiButtons.foreach { (n, b) =>
+      b.style = option(n == selectedAI, "#af7ac5", "#8e44ad")
     }

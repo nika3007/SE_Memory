@@ -130,3 +130,22 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       case _ => ()
 
     true
+
+
+  // Für Tests 
+  def processInputLine(input: String): Unit =
+    val trimmed = input.trim.toLowerCase
+
+    if trimmed == "u" || trimmed == "undo" then
+      controller.undo()
+      return
+
+    if trimmed == "r" || trimmed == "redo" then
+      controller.redo()
+      return
+
+    if trimmed == "hint" then
+      HintSystem.getHint(controller.board)
+      return
+
+    controller.processInput(trimmed)

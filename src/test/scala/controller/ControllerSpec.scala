@@ -52,5 +52,113 @@ class ControllerSpec extends AnyWordSpec with Matchers {
 
       c.currentPlayer shouldBe "human"
     }
+
+    "not crash on undo with empty stack" in {
+      val c = controller()
+      noException shouldBe thrownBy {
+        c.undo()
+      }
+    }
+
+    "not crash on redo with empty stack" in {
+      val c = controller()
+      noException shouldBe thrownBy {
+        c.redo()
+      }
+    }
+
+    "handle empty input" in {
+      val c = controller()
+      c.processInput("") shouldBe false
+    }
+
+    "set InvalidSelection on out-of-range index" in {
+      val c = controller()
+      c.processInput("99")
+      c.gameStatus shouldBe GameStatus.InvalidSelection(-1)
+    }
+
+    "allow AI to take turns" in {
+      val c = controller(ai = true)
+
+      // Mensch spielt falsch → NoMatch → AI dran
+      c.processInput("0")
+      c.processInput("1")
+
+      Thread.sleep(1300)
+
+      c.currentPlayer shouldBe "ai"
+
+      noException shouldBe thrownBy {
+        c.aiTurnFirst()
+      }
+      noException shouldBe thrownBy {
+        c.aiTurnSecond()
+      }
+    }
+
+    "advance level when all cards are matched" in {
+      val c = controller(ai = false)
+
+      c.processInput("0")
+      c.processInput("2") // Match A-A
+
+      c.processInput("1")
+      c.processInput("3") // Match B-C? (wenn passend anpassen)
+
+      c.gameStatus should (be (GameStatus.Match) or be (GameStatus.LevelComplete))
+    }
+
+    "return false on empty input" in {
+      val c = controller()
+      c.processInput("") shouldBe false
+    }
+
+    "return false on null input" in {
+      val c = controller()
+      c.processInput(null) shouldBe false
+    }
+
+    "ignore input when current player is AI" in {
+      val c = controller(ai = true)
+
+      // erzwinge AI-Zug
+      c.processInput("0")
+      c.processInput("1")
+      Thread.sleep(1300)
+
+      c.currentPlayer shouldBe "ai"
+
+      val before = c.board.cards.map(_.isFaceUp)
+      c.processInput("2")
+      c.board.cards.map(_.isFaceUp) shouldBe before
+    }
+
+    "not execute aiTurnFirst when player is human" in {
+      val c = controller(ai = true)
+      noException shouldBe thrownBy {
+        c.aiTurnFirst()
+      }
+    }
+
+    "not execute aiTurnSecond when player is human" in {
+      val c = controller(ai = true)
+      noException shouldBe thrownBy {
+        c.aiTurnSecond()
+      }
+    }
+
+    "cancel flip-back thread on undo" in {
+      val c = controller(ai = false)
+
+      c.processInput("0")
+      c.processInput("1") // NoMatch
+
+      c.undo() // setzt cancelThread = true
+
+      Thread.sleep(1300)
+
+      c.gameStatus should not be GameStatus.NextRound
+    }
   }
 }

@@ -5,50 +5,53 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 class MemoryMainSpec extends AnyWordSpec with Matchers {
 
-  private def runWithInput(input: String): String = {
-    val in = new ByteArrayInputStream(input.getBytes())
+  private def runWithInput(input: String): String =
+    val in  = new ByteArrayInputStream(input.getBytes())
     val out = new ByteArrayOutputStream()
 
     Console.withIn(in) {
       Console.withOut(out) {
         try {
-          runMemory()
+          Memory.main(Array.empty)
         } catch {
-          case _: Throwable => // Ignoriere Exceptions für Tests
+          case _: Throwable => // Endlosschleifen / System.exit ignorieren
         }
       }
     }
     out.toString
-  }
 
   "The Memory main" should {
 
-    "run without throwing an exception on normal input" in {
-      val fakeInput = "fruits\neasy\n"
-      val output = runWithInput(fakeInput)
-      
+    "print welcome message and mode selection" in {
+      val output = runWithInput("1\n")   // nur Mode
+
+      output should include ("Welcome to Memory!")
+      output should include ("choose the mode")
+      output should include ("just TUI")
+    }
+
+    "accept TUI mode and ask for theme and AI" in {
+      val output = runWithInput(
+        "1\n" +        // TUI
+        "fruits\n" +   // Theme
+        "easy\n"       // AI
+      )
+
       output should include ("Welcome to Memory!")
       output should include ("Choose theme")
       output should include ("Choose AI level")
     }
 
-    "handle invalid AI choice by using RandomAI as default" in {
-      val fakeInput = "fruits\ninvalid_ai_choice\n"
-      val output = runWithInput(fakeInput)
-      
-      output should include ("Welcome to Memory!")
-      // Testet die Zeile: case _ => RandomAI()
-    }
+    "fallback to RandomAI on invalid AI input" in {
+      val output = runWithInput(
+        "1\n" +                 // TUI
+        "fruits\n" +            // Theme
+        "not_valid_ai\n"        // AI
+      )
 
-    "work with different valid AI choices" in {
-      val aiChoices = List("none", "easy", "medium", "hard", "pro")
-      
-      for (aiChoice <- aiChoices) {
-        val fakeInput = s"fruits\n$aiChoice\n"
-        val output = runWithInput(fakeInput)
-        
-        output should include ("Welcome to Memory!")
-      }
+      output should include ("Welcome to Memory!")
+      output should include ("Choose AI level")
+      // implizit getestet: case _ => RandomAI()
     }
   }
 }

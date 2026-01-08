@@ -1,107 +1,92 @@
 package aview.gui
 
-import controller.controllerComponent.ControllerAPI
-import scalafx.application.{JFXApp3, Platform}
-import scalafx.scene.Scene
-import scalafx.scene.layout.{BorderPane, GridPane, HBox, VBox}
-import scalafx.scene.control.{Button, Label, Menu, MenuBar, MenuItem, ScrollPane}
-import scalafx.geometry.{Insets, Pos}
-import scalafx.scene.paint.Color
+import controller.controllerComponent.{ControllerAPI, GameStatus}
+import scalafx.scene.layout.{BorderPane, GridPane, VBox, HBox}
+import scalafx.scene.control.{Button, Label}
 import scalafx.scene.text.Font
-import scalafx.scene.effect.DropShadow
+import scalafx.scene.paint.Color
+import scalafx.geometry.{Insets, Pos}
+import scalafx.application.Platform
 import scalafx.Includes._
-
-import util.Observer
-import controller.controllerComponent.GameStatus
 import model.*
 import util.HintSystem
 
+case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
 
-case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int)
-  extends Observer:
-
-  controller.add(this)
+  //UI ELEMENTE ----------------
 
   private val grid = new GridPane()
 
-  private val statusLabel = new Label("Willkommen zu Memory!") {
-    font = Font("Arial", 18)
-    textFill = Color.DarkBlue
+  private val statusLabel = new Label() {
+    font = Font("Arial", 16)
+    textFill = Color.Black
   }
 
-  private val playerLabel = new Label("Spieler: Mensch") {
+  private val playerLabel = new Label() {
     font = Font("Arial", 14)
-    textFill = Color.DarkGreen
   }
 
   private val levelLabel = new Label(s"Level: ${levelIndex + 1}") {
     font = Font("Arial", 14)
-    textFill = Color.DarkRed
   }
 
-  val scene: Scene = new Scene {
-    root = new BorderPane {
+  // ROOT ----------------
 
-      // ---------------- MENU OBEN ----------------
-      top = buildMenu()
+  val root: BorderPane = new BorderPane {
+    style = "-fx-background-color: #f7f9fb;"
 
-      // ---------------- CENTER (ScrollPane) ----------------
-      center = new ScrollPane {
-        fitToWidth = true
-        content = buildBoardWithCoordinates()
-      }
-
-      // ---------------- STATUS UNTEN ----------------
-      bottom = buildStatusBar()
-    }
+    top = buildTopBar()
+    center = buildCenter()
+    bottom = buildStatusBar()
   }
 
-  drawBoard()
+  // initial
+  redrawBoard()
   updateStatus()
 
-  // ---------------------------------------------------------
-  // MENU
-  // ---------------------------------------------------------
+  
+  // TOP BAR--------------------------
 
-  private def buildMenu(): MenuBar =
-    new MenuBar {
-      menus = List(
-        new Menu("Spiel") {
-          items = List(
-            new MenuItem("Hint anzeigen") {
-              onAction = _ => controller.processInput("hint")
-            },
-            new MenuItem("Rückgängig (Undo)") {
-              onAction = _ => controller.undo()
-            },
-            new MenuItem("Wiederholen (Redo)") {
-              onAction = _ => controller.redo()
-            },
-            new MenuItem("Levelübersicht") {
-              onAction = _ => gui.showLevelSelect()
-            },
-            new MenuItem("Menü") {
-              onAction = _ => gui.showStartMenu()
-            },
-            new MenuItem("Beenden") {
-              onAction = _ => Platform.exit()
-            }
-          )
+  private def buildTopBar(): HBox =
+    new HBox {
+      spacing = 10
+      padding = Insets(10)
+      alignment = Pos.CenterLeft
+      style = "-fx-background-color: #ecf0f1;"
+
+      children = Seq(
+        new Button("⟵ Menü") {
+          onAction = _ => gui.showStartMenu()
+        },
+        new Button("Undo") {
+          onAction = _ => controller.undo()
+        },
+        new Button("Redo") {
+          onAction = _ => controller.redo()
+        },
+        new Button("Hint") {
+          onAction = _ => showHint()
         }
       )
     }
 
-  // ---------------------------------------------------------
-  // STATUS
-  // ---------------------------------------------------------
+ 
+  // CENTER----------------------------------
+
+  private def buildCenter(): VBox =
+    new VBox {
+      alignment = Pos.Center
+      padding = Insets(20)
+      children = Seq(grid)
+    }
+
+  
+  // STATUS BAR------------------------------
 
   private def buildStatusBar(): VBox =
     new VBox {
-      spacing = 5
+      spacing = 6
       padding = Insets(10)
-      alignment = Pos.CenterLeft
-      maxWidth = 600
-
       children = Seq(
         statusLabel,
         new HBox {
@@ -111,136 +96,74 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int)
       )
     }
 
-  // ---------------------------------------------------------
-  // BOARD + KOORDINATEN
-  // ---------------------------------------------------------
 
-  private def buildBoardWithCoordinates(): VBox =
+  // BOARD ZEICHNEN-------------------------------
+
+  def redrawBoard(): Unit =
     val b = controller.board
-    val (rows, cols) = calculateBoardSize(b)
-
-    val columnLabels = new HBox {
-      spacing = 10
-      alignment = Pos.Center
-      maxWidth = 600
-      children = (0 until cols).map(c => new Label(c.toString) {
-        font = Font("Arial", 18)
-        textFill = Color.DarkGray
-      })
-    }
-
-    val rowLabels = new VBox {
-      spacing = 10
-      alignment = Pos.Center
-      children = (0 until rows).map(r => new Label(r.toString) {
-        font = Font("Arial", 18)
-        textFill = Color.DarkGray
-      })
-    }
-
-    new VBox {
-      spacing = 10
-      alignment = Pos.Center
-      padding = Insets(20)
-      maxWidth = 600
-      children = Seq(
-        columnLabels,
-        new HBox {
-          spacing = 10
-          alignment = Pos.Center
-          children = Seq(rowLabels, grid)
-        }
-      )
-    }
-
-  // ---------------------------------------------------------
-  // BOARD ZEICHNEN
-  // ---------------------------------------------------------
-
-  private def drawBoard(): Unit =
-    val b = controller.board
-    val (rows, cols) = calculateBoardSize(b)
+    val total = b.cards.length
+    val cols = math.ceil(math.sqrt(total)).toInt
 
     grid.children.clear()
-    grid.hgap = 10
-    grid.vgap = 10
-    grid.padding = Insets(20)
+    grid.hgap = 16
+    grid.vgap = 16
     grid.alignment = Pos.Center
 
-    for r <- 0 until rows do
-      for c <- 0 until cols do
-        val i = r * cols + c
-        if i < b.cards.length then
-          val card = b.cards(i)
+    for i <- 0 until total do
+      val card = b.cards(i)
 
-          val button = new Button {
-            maxWidth = Double.MaxValue
-            minWidth = 100
-            prefHeight = 120
-            font = Font("Arial", 24)
+      val btn = new Button {
+        prefWidth = 120
+        prefHeight = 140
+        font = Font("Arial", 28)
 
-            if card.isMatched then
-              style = "-fx-background-color: #90EE90; -fx-border-color: #228B22; -fx-border-width: 3;"
-              text = "✓ " + card.symbol
-              textFill = Color.DarkGreen
+        text =
+          if card.isMatched then "✓"
+          else if card.isFaceUp then card.symbol
+          else "?"
 
-            else if card.isFaceUp then
-              style = "-fx-background-color: #FFFACD; -fx-border-color: #DAA520; -fx-border-width: 2;"
-              text = card.symbol
-              textFill = Color.Black
+        style =
+          if card.isMatched then "-fx-background-color: #2ecc71;"
+          else if card.isFaceUp then "-fx-background-color: #f9e79f;"
+          else "-fx-background-color: #5dade2;"
 
-            else
-              style = "-fx-background-color: linear-gradient(to bottom, #4169E1, #00008B); -fx-border-color: #191970; -fx-border-width: 2;"
-              text = "?"
-              textFill = Color.White
+        onAction = _ =>
+          if controller.currentPlayer == "human"
+             && !card.isFaceUp
+             && !card.isMatched
+          then
+            controller.processInput(i.toString)
+      }
 
-            onAction = { () =>
-              if controller.currentPlayer == "human" && !card.isMatched && !card.isFaceUp then
-                controller.processInput(i.toString)
-            }
-          }
+      GridPane.setRowIndex(btn, i / cols)
+      GridPane.setColumnIndex(btn, i % cols)
+      grid.children.add(btn)
 
-          button.effect = new DropShadow {
-            radius = 5
-            offsetX = 3
-            offsetY = 3
-            color = Color.Gray
-          }
 
-          GridPane.setRowIndex(button, r)
-          GridPane.setColumnIndex(button, c)
-          grid.children.add(button)
+  // STATUS UPDATE  (inkl. Hint-Filter)-----------------------
 
-  // ---------------------------------------------------------
-  // BOARD-GRÖSSE (KORREKT!)
-  // ---------------------------------------------------------
+  def updateStatus(): Unit =
+    controller.gameStatus match
+      case GameStatus.InvalidSelection(i) if i == -1 =>
+        () // Hint / ungültige Texte ignorieren
 
-  private def calculateBoardSize(board: Board): (Int, Int) =
-    val total = board.cards.length
-    val side = math.sqrt(total).toInt
-    (side, side)
-
-  // ---------------------------------------------------------
-  // STATUS UPDATE
-  // ---------------------------------------------------------
-
-  private def updateStatus(): Unit =
-    val msg = GameStatus.message(controller.gameStatus)
-    if msg.nonEmpty then statusLabel.text = msg
+      case other =>
+        val msg = GameStatus.message(other)
+        if msg.nonEmpty then
+          statusLabel.text = msg
 
     playerLabel.text =
       s"Spieler: ${if controller.currentPlayer == "human" then "Mensch" else "KI"}"
 
-    val lvl = controller.game.currentLevelIndex + 1
-    levelLabel.text = s"Level: $lvl"
 
-  // ---------------------------------------------------------
-  // OBSERVER
-  // ---------------------------------------------------------
 
-  override def update: Boolean =
-    Platform.runLater {
-      drawBoard()
-      updateStatus()
-    }
-    true
+  // HINT (EXAKT WIE TUI)-------------------------
+
+  private def showHint(): Unit =
+    HintSystem.getHint(controller.board) match
+      case Some((a, b)) =>
+        statusLabel.text =
+          s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!"
+      case None =>
+        statusLabel.text =
+          "💡 Kein sicheres Paar bekannt."

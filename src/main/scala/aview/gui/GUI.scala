@@ -1,46 +1,85 @@
 package aview.gui
 
-import scalafx.application.JFXApp3
-import scalafx.scene.Scene
-import scalafx.stage.Stage
-import controller.controllerComponent.ControllerAPI
-import aview.gui.{StartMenu, Auswahl, LevelCard, GameScene}
+import scalafx.application.{JFXApp3, Platform}
 import scalafx.application.JFXApp3.PrimaryStage
+import scalafx.scene.Scene
+import scalafx.scene.layout.BorderPane
+import controller.controllerComponent.{ControllerAPI, GameStatus}
+import util.Observer
 
+class GUI(val controller: ControllerAPI) extends JFXApp3 with Observer:
 
-class GUI(val controller: ControllerAPI) extends JFXApp3:
-
-  // Level 1 freigeschaltet, danach dynamisch erweitern
-  private var unlockedLevels: Set[Int] = Set(0) // 0-basiert: Level-Index 0 = erstes Level
+  private val rootPane = new BorderPane()
+  private var currentGameScene: Option[GameScene] = None
+  @volatile private var aiRunning = false
 
   override def start(): Unit =
+    controller.add(this)
+
     stage = new PrimaryStage()
     stage.title = "Memory"
-    stage.width = 900
-    stage.height = 750
-    stage.resizable = true
+    stage.scene = new Scene(rootPane, 600, 600)
+    stage.setResizable(true)
+
     showStartMenu()
 
+  // ---------- Navigation ----------
+
   def showStartMenu(): Unit =
-    stage.scene = StartMenu(this).scene
+    currentGameScene = None
+    rootPane.center = StartMenu(this).root
+    rootPane.top = null
+    rootPane.bottom = null
 
-  // dein Auswahl-Screen für Theme + AI
   def showMöglichkeiten(): Unit =
-    stage.scene = Auswahl(this).scene
-
-  def showLevelSelect(): Unit =
-    stage.scene = LevelCard(this, unlockedLevels).scene
+    currentGameScene = None
+    rootPane.center = Auswahl(this).root
+    rootPane.top = null
+    rootPane.bottom = null
 
   def showGame(levelIndex: Int): Unit =
-    // Wenn du später Level-spezifisches Laden willst, kannst du hier controller.loadLevel(levelIndex) etc. machen
-    stage.scene = GameScene(this, controller, levelIndex).scene
+    val gs = GameScene(this, controller, levelIndex)
+    currentGameScene = Some(gs)
+    rootPane.center = gs.root
+    rootPane.top = null
+    rootPane.bottom = null
 
-  def unlockLevel(levelIndex: Int): Unit =
-    unlockedLevels += levelIndex
+  // ---------- Settings ----------
 
-  // von Auswahl/Settings aufgerufen
   def setTheme(name: String): Unit =
     controller.game.setTheme(name)
 
   def setAI(name: String): Unit =
     controller.game.setAI(name)
+
+  // ---------- Observer ----------
+
+  override def update: Boolean =
+    Platform.runLater {
+      currentGameScene.foreach { gs =>
+        gs.redrawBoard()
+        gs.updateStatus()
+      }
+      runAI()
+    }
+    true
+
+  // ---------- AI ----------
+
+  private def runAI(): Unit =
+    val status = controller.gameStatus
+
+    if controller.currentPlayer == "ai"
+       && !aiRunning
+       && (status == GameStatus.Idle
+           || status == GameStatus.NextRound
+           || status == GameStatus.Match)
+    then
+      aiRunning = true
+      new Thread(() =>
+        Thread.sleep(400)
+        controller.aiTurnFirst()
+        Thread.sleep(700)
+        controller.aiTurnSecond()
+        aiRunning = false
+      ).start()
