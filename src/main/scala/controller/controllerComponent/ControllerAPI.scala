@@ -2,7 +2,7 @@ package controller.controllerComponent
 
 import util.Observer
 import model.modelComponent.MemoryGameAPI
-import model.Board
+import model.boardComponent.BoardAPI
 import controller.controllerComponent.GameStatus
 
 trait ControllerAPI:
@@ -10,7 +10,7 @@ trait ControllerAPI:
   def remove(o: Observer): Unit
   def notifyObservers: Unit
 
-  def board: Board
+  def board: BoardAPI
   def processInput(input: String): Boolean
   def undo(): Unit
   def redo(): Unit

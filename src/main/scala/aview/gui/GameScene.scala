@@ -8,12 +8,11 @@ import scalafx.scene.paint.Color
 import scalafx.geometry.{Insets, Pos}
 import scalafx.application.Platform
 import scalafx.Includes._
-import model.*
 import util.HintSystem
 
 case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
 
-  //UI ELEMENTE ----------------
+  // UI ELEMENTE ----------------
 
   private val grid = new GridPane()
 
@@ -44,7 +43,6 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
   redrawBoard()
   updateStatus()
 
-  
   // TOP BAR--------------------------
 
   private def buildTopBar(): HBox =
@@ -70,7 +68,6 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
       )
     }
 
- 
   // CENTER----------------------------------
 
   private def buildCenter(): VBox =
@@ -80,7 +77,6 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
       children = Seq(grid)
     }
 
-  
   // STATUS BAR------------------------------
 
   private def buildStatusBar(): VBox =
@@ -96,11 +92,11 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
       )
     }
 
-
   // BOARD ZEICHNEN-------------------------------
 
   def redrawBoard(): Unit =
-    val b = controller.board
+    // 🔑 UI liest STATE, nicht Component
+    val b = controller.board.board
     val total = b.cards.length
     val cols = math.ceil(math.sqrt(total)).toInt
 
@@ -139,8 +135,7 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
       GridPane.setColumnIndex(btn, i % cols)
       grid.children.add(btn)
 
-
-  // STATUS UPDATE  (inkl. Hint-Filter)-----------------------
+  // STATUS UPDATE -----------------------
 
   def updateStatus(): Unit =
     controller.gameStatus match
@@ -155,12 +150,11 @@ case class GameScene(gui: GUI, controller: ControllerAPI, levelIndex: Int):
     playerLabel.text =
       s"Spieler: ${if controller.currentPlayer == "human" then "Mensch" else "KI"}"
 
-
-
-  // HINT (EXAKT WIE TUI)-------------------------
+  // HINT (wie TUI)-------------------------
 
   private def showHint(): Unit =
-    HintSystem.getHint(controller.board) match
+    // 🔑 Hint arbeitet auf STATE
+    HintSystem.getHint(controller.board.board) match
       case Some((a, b)) =>
         statusLabel.text =
           s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!"

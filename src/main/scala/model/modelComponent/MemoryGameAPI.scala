@@ -1,6 +1,7 @@
 package model.modelComponent
 
 import model.*
+import model.boardComponent.BoardAPI
 
 trait MemoryGameAPI:
   def theme: Theme
@@ -12,8 +13,8 @@ trait MemoryGameAPI:
   def currentLevelIndex: Int
   def currentLevelNumber: Int
 
-  def board: Board
-  def board_=(b: Board): Unit
+  def board: BoardAPI
+  //def board_=(b: Board): Unit
 
   def save(): GameMemento
   def restore(m: GameMemento): Unit

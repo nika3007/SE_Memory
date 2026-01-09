@@ -3,14 +3,13 @@ package controller.controllerComponent.controllerBaseImpl
 import controller.controllerComponent.{ControllerAPI, GameStatus, Command}
 import model.*
 import model.modelComponent.MemoryGameAPI
+import model.boardComponent.BoardAPI
 import util.Observable
 
 import scala.util.Try
-
 import com.google.inject.Inject
 
 final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
-
   extends Observable
   with ControllerAPI:
 
@@ -22,8 +21,10 @@ final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
   private[controllerComponent] var _currentPlayer: String = "human"
   override def currentPlayer: String = _currentPlayer
 
-  override def board: Board = game.board
+  // Controller kennt nur das Board-Component
+  override def board: BoardAPI = game.board
 
+  // Thread-Sichtbarkeit
   @volatile private[controllerComponent] var cancelThread = false
 
   private var undoStack: List[Command] = Nil
@@ -71,11 +72,15 @@ final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
 
   override def aiTurnFirst(): Unit =
     if currentPlayer == "ai" then
-      execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
+      execute(
+        new ChooseCardCommand(this, game.ai.chooseCard(board.board))
+      )
 
   override def aiTurnSecond(): Unit =
     if currentPlayer == "ai" then
-      execute(new ChooseCardCommand(this, game.ai.chooseCard(board)))
+      execute(
+        new ChooseCardCommand(this, game.ai.chooseCard(board.board))
+      )
 
   private def advanceLevelIfPossible(): Unit =
     _gameStatus = GameStatus.LevelComplete
@@ -91,15 +96,12 @@ final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
       notifyObservers
 
   private[controllerComponent] def handleCardSelection(i: Int): Unit =
-    val oldBoard = board
-    val (nextBoard, result) = board.choose(i)
+    val (_, result) = board.choose(i)
 
-    if nextBoard.eq(oldBoard) && result.isEmpty then
+    if result.isEmpty then
       _gameStatus = GameStatus.InvalidSelection(i)
       notifyObservers
       return
-
-    game.board = nextBoard
 
     result match
       case None =>
@@ -110,7 +112,7 @@ final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
         _gameStatus = GameStatus.Match
         notifyObservers
 
-        if game.board.cards.forall(_.isMatched) then
+        if board.allMatched then
           advanceLevelIfPossible()
 
       case Some(false) =>
@@ -121,8 +123,8 @@ final class ControllerImpl @Inject() (private val _game: MemoryGameAPI)
           Thread.sleep(1200)
 
           if !cancelThread then
-            game.board = game.board.copy(
-              cards = game.board.cards.map {
+            board.board = board.board.copy(
+              cards = board.board.cards.map {
                 case c if c.isFaceUp && !c.isMatched => c.flip
                 case c => c
               }

@@ -14,3 +14,5 @@ trait BoardAPI:
 
   // wird true wenn alle karten korrekt aufgedeckt wurden
   def allMatched: Boolean
+
+  def cards = board.cards

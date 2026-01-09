@@ -11,9 +11,11 @@ class MemoryModule(theme: Theme, ai: AIPlayer, levels: Vector[Level])
   extends AbstractModule with ScalaModule:
 
   override def configure(): Unit =
-    // bauen Game von außen (Theme, AI, Levels wählen - dann erst game bauen mit UI)
-    bind[MemoryGameAPI].toInstance(new MemoryGameImpl(theme, ai, levels))
-     
+    // wegen Konstruktor Parameter toInstance, deshaln kein inject in memoryimpl
+    val game = new MemoryGameImpl(theme, ai, levels)
+    bind[MemoryGameAPI].toInstance(game) 
+    //bind[MemoryGameAPI].toInstance(new MemoryGameImpl(theme, ai, levels)) ---> vereinfacht
+    
     // Controller bekommt exakt dieses Game
-    bind[ControllerAPI].to[ControllerImpl]
+    bind[ControllerAPI].to[ControllerImpl] //brauchen im controller inject, MemoryApi kommt aus injector, guice erstellt
 

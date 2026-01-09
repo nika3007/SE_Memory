@@ -57,8 +57,8 @@ object Memory {
     )
 
     // 4) Dependency Injection
-    val injector = Guice.createInjector(new MemoryModule(theme, ai, levels))
-    val controller = injector.getInstance(classOf[ControllerAPI])
+    val injector = Guice.createInjector(new MemoryModule(theme, ai, levels)) // Guice wird erstellt, liest Module
+    val controller = injector.getInstance(classOf[ControllerAPI]) // Controller wird vom Injector erstellt, MemoryGameAPI wird injected
 
 
     // 5) Views

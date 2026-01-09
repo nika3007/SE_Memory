@@ -1,7 +1,6 @@
 package controller.controllerComponent.controllerBaseImpl
 
-import controller.controllerComponent.Command
-import controller.controllerComponent.GameStatus
+import controller.controllerComponent.{Command, GameStatus}
 import model.Board
 
 class ChooseCardCommand(controller: ControllerImpl, index: Int) extends Command:
@@ -11,7 +10,8 @@ class ChooseCardCommand(controller: ControllerImpl, index: Int) extends Command:
   private var beforeStatus: GameStatus = GameStatus.Idle
 
   override def doStep(): Unit =
-    beforeBoard = controller.board.copy()
+    // ✅ State sichern, nicht Component
+    beforeBoard = controller.board.board
     beforePlayer = controller.currentPlayer
     beforeStatus = controller.gameStatus
 
@@ -19,7 +19,9 @@ class ChooseCardCommand(controller: ControllerImpl, index: Int) extends Command:
 
   override def undoStep(): Unit =
     controller.cancelThread = true
-    controller.game.board = beforeBoard
+
+    // ✅ State kontrolliert über BoardComponent zurücksetzen
+    controller.board.board = beforeBoard
     controller._currentPlayer = beforePlayer
     controller._gameStatus = beforeStatus
     controller.notifyObservers

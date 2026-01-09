@@ -40,7 +40,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       return
 
     if trimmed == "hint" then
-      HintSystem.getHint(controller.board) match
+      HintSystem.getHint(controller.board.board) match
         case Some((a, b)) =>
           println(s"💡 Hinweis: Sicheres Paar → Karte $a und Karte $b!\n")
         case None =>
@@ -56,7 +56,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
     println("🎮 Memory gestartet!")
     println()
     println("👉 Du bist dran!")
-    println(renderer.render(controller.board))
+    println(renderer.render(controller.board.board))
     println()
 
     while true do
@@ -65,10 +65,14 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
         case "human" if controller.gameStatus != GameStatus.NoMatch =>
           controller.gameStatus match
             case GameStatus.FirstCard =>
-              println(s"Wähle zweite Karte (0 bis ${controller.board.cards.size - 1}):")
+              println(
+                s"Wähle zweite Karte (0 bis ${controller.board.board.cards.size - 1}):"
+              )
 
             case _ =>
-              println(s"Wähle erste Karte (0 bis ${controller.board.cards.size - 1}):")
+              println(
+                s"Wähle erste Karte (0 bis ${controller.board.board.cards.size - 1}):"
+              )
 
           handleHumanInput()
 
@@ -76,7 +80,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
           controller.gameStatus match
             case GameStatus.Idle | GameStatus.NextRound | GameStatus.Match =>
               println("🤖 AI ist dran!")
-              println(renderer.render(controller.board))
+              println(renderer.render(controller.board.board))
               println()
 
               Thread.sleep(400)
@@ -112,12 +116,12 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       case GameStatus.FirstCard
            | GameStatus.Match
            | GameStatus.NoMatch =>
-        println(renderer.render(controller.board))
+        println(renderer.render(controller.board.board))
         println()
 
       case GameStatus.NextRound =>
         println("nächste Runde...")
-        println(renderer.render(controller.board))
+        println(renderer.render(controller.board.board))
         println()
 
       case GameStatus.LevelComplete =>
@@ -131,8 +135,9 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
 
     true
 
-
-  // Für Tests 
+  // -----------------------------
+  // Für Tests
+  // -----------------------------
   def processInputLine(input: String): Unit =
     val trimmed = input.trim.toLowerCase
 
@@ -145,7 +150,7 @@ class MemoryTui(val controller: ControllerAPI) extends Observer:
       return
 
     if trimmed == "hint" then
-      HintSystem.getHint(controller.board)
+      HintSystem.getHint(controller.board.board)
       return
 
     controller.processInput(trimmed)

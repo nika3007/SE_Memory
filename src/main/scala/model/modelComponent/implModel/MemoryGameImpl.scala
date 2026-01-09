@@ -3,6 +3,7 @@ package model.modelComponent.implModel
 import scala.util.Random
 import model.*
 import model.modelComponent.MemoryGameAPI
+import model.boardComponent.{BoardAPI, BoardComponent}
 
 final class MemoryGameImpl(
   private var _theme: Theme,
@@ -15,10 +16,12 @@ final class MemoryGameImpl(
   override def ai: AIPlayer = _ai
 
   private var _levelIndex: Int = 0
-  private var _board: Board = buildBoard(levels(_levelIndex))
 
-  override def board: Board = _board
-  override def board_=(b: Board): Unit = _board = b
+  // BoardComponent kapselt model.Board
+  private var _board: BoardAPI =
+    BoardComponent(buildBoard(levels(_levelIndex)))
+
+  override def board: BoardAPI = _board
 
   override def levelsCount: Int = levels.size
 
@@ -27,31 +30,30 @@ final class MemoryGameImpl(
   override def currentLevelIndex: Int = _levelIndex
   override def currentLevelNumber: Int = _levelIndex + 1
 
-  override def save(): GameMemento =
-    GameMemento(board)
 
+  override def save(): GameMemento =
+    GameMemento(_board.board)
+
+  
   override def restore(m: GameMemento): Unit =
-    board = m.board
+    _board = BoardComponent(m.board)
 
   override def nextLevel(): Boolean =
     if _levelIndex + 1 < levels.size then
       _levelIndex += 1
-      board = buildBoard(levels(_levelIndex))
+      _board = BoardComponent(buildBoard(levels(_levelIndex)))
       true
     else
       false
 
-  // -----------------------------
-  // NEU: Theme dynamisch setzen
-  // -----------------------------
+ 
+  // Theme dynamisch setzen
   override def setTheme(name: String): Unit =
     _theme = ThemeFactory.getTheme(name)
-    // Board neu generieren, damit Theme sofort sichtbar ist
-    _board = buildBoard(currentLevel)
+    _board = BoardComponent(buildBoard(currentLevel))
 
-  // -----------------------------
-  // NEU: AI dynamisch setzen
-  // -----------------------------
+
+  // AI dynamisch setzen
   override def setAI(name: String): Unit =
     _ai = name.toLowerCase match
       case "none"   => NoAI()
@@ -61,9 +63,8 @@ final class MemoryGameImpl(
       case "pro"    => MemoryAI()
       case _        => RandomAI()
 
-  // -----------------------------
-  // Board generieren
-  // -----------------------------
+
+  // Board generieren (STATE)
   private def buildBoard(level: Level): Board =
     val size   = level.size
     val needed = (size.rows * size.cols) / level.difficulty.matchAmount
