@@ -8,6 +8,9 @@ import controller.controllerComponent.ControllerAPI
 import model._
 import model.modelComponent.implModel.MemoryGameImpl
 
+import model.fileIoComponent.FileIOInterface
+
+
 object Memory {
 
   def main(args: Array[String]): Unit = {
@@ -60,6 +63,21 @@ object Memory {
     val injector = Guice.createInjector(new MemoryModule(theme, ai, levels))
     val controller = injector.getInstance(classOf[ControllerAPI])
 
+    /*// SE12 TEST: FileIO
+    val fileIO = injector.getInstance(classOf[FileIOInterface]) //holen
+
+    fileIO.save(controller.game.board)  //speichern Startzustand
+    println("Board saved via FileIO")
+    */
+    
+    /*
+    // SE12: Save game on exit
+    sys.addShutdownHook {
+      val fileIO = injector.getInstance(classOf[FileIOInterface])
+      fileIO.save(controller.game.board)
+      println("Game saved on exit.")
+    }
+    */
 
     // 5) Views
     mode match

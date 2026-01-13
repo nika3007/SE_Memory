@@ -1,0 +1,23 @@
+{
+  "cards" : [ {
+    "id" : 0,
+    "symbol" : "🍇",
+    "isFaceUp" : true,
+    "isMatched" : true
+  }, {
+    "id" : 1,
+    "symbol" : "🍎",
+    "isFaceUp" : false,
+    "isMatched" : false
+  }, {
+    "id" : 2,
+    "symbol" : "🍎",
+    "isFaceUp" : true,
+    "isMatched" : false
+  }, {
+    "id" : 3,
+    "symbol" : "🍇",
+    "isFaceUp" : true,
+    "isMatched" : true
+  } ]
+}

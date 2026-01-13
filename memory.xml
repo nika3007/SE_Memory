@@ -1,0 +1,6 @@
+<board>
+    <card id="0" symbol="🍇" isFaceUp="true" isMatched="true"/>
+    <card id="1" symbol="🍎" isFaceUp="false" isMatched="false"/>
+    <card id="2" symbol="🍎" isFaceUp="true" isMatched="false"/>
+    <card id="3" symbol="🍇" isFaceUp="true" isMatched="true"/>
+</board>

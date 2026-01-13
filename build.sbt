@@ -19,9 +19,16 @@ lazy val root = project
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % Test,
     Test / javaOptions += "-Dtest.env=true",
 
+    // JSON für File I/O
+    libraryDependencies += "com.typesafe.play" %% "play-json" % "2.10.5",
+
+    // XML für File I/O
+    libraryDependencies += "org.scala-lang.modules" %% "scala-xml" % "2.4.0",
+
+
 
     // Compiler-Optionen
-    scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked"),
+    scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Wconf:msg=Implicit parameters should be provided with a `using` clause:s"),
 
     // Fork für JavaFX erforderlich
     run / fork := false,
