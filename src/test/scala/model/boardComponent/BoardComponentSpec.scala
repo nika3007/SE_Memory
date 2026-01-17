@@ -14,10 +14,9 @@ final class BoardComponentSpec extends AnyWordSpec with Matchers:
       val base = Board(Vector(Card(0, "A"), Card(1, "A")))
       val api: BoardAPI = BoardComponent(base)
 
-      api should not be null
-
-      api shouldBe a [BoardImpl]
+      api.board.cards shouldBe base.cards
     }
+
 
     "preserve the cards from the wrapped Board" in {
       val base = Board(Vector(Card(0, "A"), Card(1, "A")))

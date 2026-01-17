@@ -1,4 +1,4 @@
-package controller
+package controller.controllerComponent.controllerBaseImpl
 
 import controller.controllerComponent.controllerBaseImpl.{ControllerImpl, ChooseCardCommand}
 import model.*
