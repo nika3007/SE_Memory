@@ -1,66 +1,101 @@
-import aview.MemoryTui
-import controller.Controller
-import model._
+import com.google.inject.Guice
+import scalafx.application.Platform
 import scala.io.StdIn.readLine
 
-@main def runMemory(): Unit =
-  println("Welcome to Memory!")
-  println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
-  
-  val themeName = readLine().trim()
+import aview.MemoryTui
+import aview.gui.GUI
+import controller.controllerComponent.ControllerAPI
+import model._
+import model.modelComponent.implModel.MemoryGameImpl
 
-  // 1) Theme wählen
-  val theme = ThemeFactory.getTheme(themeName)
-
-  // 2) KI auswählen
-  val ai = MemoryAI()
-
-  // 3) Levels definieren
-  val levels = Vector(
-    Level(BoardSizes.Small2x2, Difficulties.Easy), //i=0, level1
-    //Level(BoardSizes.Small2x2, Difficulties.Hard),
-    Level(BoardSizes.Medium4x4, Difficulties.Easy),
-    Level(BoardSizes.Medium4x4, Difficulties.Hard, 0),
-    Level(BoardSizes.Large6x6, Difficulties.Easy, 0),
-    Level(BoardSizes.Large6x6, Difficulties.Easy, 240),
-  )
-
-  // 4) MemoryGame mit Levelsystem erzeugen
-  val game = MemoryGame(theme, ai, levels)
-
-  // 5) Controller benutzt jetzt MemoryGame
-  val controller = Controller(game)
-
-  // 6) TUI starten
-  val tui = MemoryTui(controller)
-  tui.run()
+import model.fileIoComponent.FileIOInterface
 
 
+object Memory {
 
+  def main(args: Array[String]): Unit = {
 
-/* Main wie beim Prof, für spec mit testbaren objekt, aber man muss dann tui und co anpassen
-object Memory:
-  def main(args: Array[String]): Unit =
-    // Keine Eingabe → nur starten, NICHT readLine aufrufen
-    if args.nonEmpty then
-      println("Welcome to Memory!")
-      val controller = Controller(4, 4)
-      val tui = MemoryTui(controller)
-      tui.processInputLine(args(0))
-    else
-      println("Welcome to Memory!")
-*/
+    println("Welcome to Memory!")
 
+    // 1) Mode
+    println("choose the mode:")
+    println("  1) just TUI")
+    println("  2) just GUI")
+    println("  3) both")
+    val mode = readLine().trim match
+      case "2" => "gui"
+      case "3" => "both"
+      case _   => "tui"
 
+    // 2) Theme
+    // Theme & AI nur bei TUI abfragen
+    val (theme, ai) =
+      if mode == "tui" then
+        println("Choose theme: fruits / animals / emoji / sports / vehicles / flags / landscape")
+        val themeName = readLine().trim
+        val theme = ThemeFactory.getTheme(
+          if themeName.nonEmpty then themeName else "fruits"
+        )
 
-/*
-echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 17)' >> ~/.zshrc
-echo 'export SBT_JAVA_HOME="$JAVA_HOME"'               >> ~/.zshrc
-echo 'export PATH="$JAVA_HOME/bin:$PATH"'              >> ~/.zshrc
+        println("Choose AI level: none / easy / medium / hard / pro")
+        val ai = readLine().trim.toLowerCase match
+          case "none"   => NoAI()
+          case "easy"   => RandomAI()
+          case "medium" => MediumAI()
+          case "hard"   => HardAI()
+          case "pro"    => MemoryAI()
+          case _        => RandomAI()
 
-source ~/.zshrc
+        (theme, ai)
+      else
+        // GUI setzt Theme & AI später
+        (ThemeFactory.getTheme("fruits"), RandomAI())
 
-echo $JAVA_HOME
-java -version
-sbt sbtVersion
-*/
+    // 3) Levels
+    val levels = Vector(
+      Level(BoardSizes.Small2x2, Difficulties.Easy),
+      Level(BoardSizes.Medium4x4, Difficulties.Easy),
+      Level(BoardSizes.Medium4x4, Difficulties.Hard),
+      Level(BoardSizes.Large6x6, Difficulties.Easy)
+    )
+
+    // 4) Dependency Injection
+    val injector = Guice.createInjector(new MemoryModule(theme, ai, levels))
+    val controller = injector.getInstance(classOf[ControllerAPI])
+
+    /*// SE12 TEST: FileIO
+    val fileIO = injector.getInstance(classOf[FileIOInterface]) //holen
+
+    fileIO.save(controller.game.board)  //speichern Startzustand
+    println("Board saved via FileIO")
+    */
+    
+    /*
+    // SE12: Save game on exit
+    sys.addShutdownHook {
+      val fileIO = injector.getInstance(classOf[FileIOInterface])
+      fileIO.save(controller.game.board)
+      println("Game saved on exit.")
+    }
+    */
+
+    // 5) Views
+    mode match
+      case "gui" =>
+        Platform.startup(() => {})
+        new GUI(controller).main(Array())
+
+      case "both" =>
+        // GUI im eigenen Thread (WICHTIG!)
+        new Thread(() => {
+          Platform.startup(() => {})
+          new GUI(controller).main(Array())
+        }).start()
+
+        // TUI im Hauptthread
+        MemoryTui(controller).run()
+
+      case _ =>
+        MemoryTui(controller).run()
+  }
+}

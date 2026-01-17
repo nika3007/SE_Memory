@@ -1,0 +1,4 @@
+<board>
+    <card id="0" symbol="A" isFaceUp="false" isMatched="false"/>
+    <card id="1" symbol="A" isFaceUp="false" isMatched="false"/>
+</board>

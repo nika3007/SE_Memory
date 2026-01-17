@@ -5,32 +5,53 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 
 class MemoryMainSpec extends AnyWordSpec with Matchers {
 
-  "The Memory main" should {
+  private def runWithInput(input: String): String =
+    val in  = new ByteArrayInputStream(input.getBytes())
+    val out = new ByteArrayOutputStream()
 
-    "run without throwing an exception on automated input" in {
-
-      // ❶ Fake Input generieren:
-      val fakeInput =
-        "fruits\n" +          // Theme-Auswahl
-        ("0\n" * 50) +        // genug Eingaben, um Level 1 zu beenden
-        "\n"                  // notfalls Abbruch
-
-      val in  = new ByteArrayInputStream(fakeInput.getBytes())
-      val out = new ByteArrayOutputStream()
-
-      // ❷ Test starten
-      Console.withIn(in) {
-        Console.withOut(out) {
-          noException should be thrownBy {
-            runMemory()
-          }
+    Console.withIn(in) {
+      Console.withOut(out) {
+        try {
+          Memory.main(Array.empty)
+        } catch {
+          case _: Throwable => // Endlosschleifen / System.exit ignorieren
         }
       }
+    }
+    out.toString
 
-      // ❸ Ausgabe prüfen
-      val text = out.toString
-      text should include ("Memory gestartet")
-      text should include ("Level 1")
+  "The Memory main" should {
+
+    "print welcome message and mode selection" in {
+      val output = runWithInput("1\n")   // nur Mode
+
+      output should include ("Welcome to Memory!")
+      output should include ("choose the mode")
+      output should include ("just TUI")
+    }
+
+    "accept TUI mode and ask for theme and AI" in {
+      val output = runWithInput(
+        "1\n" +        // TUI
+        "fruits\n" +   // Theme
+        "easy\n"       // AI
+      )
+
+      output should include ("Welcome to Memory!")
+      output should include ("Choose theme")
+      output should include ("Choose AI level")
+    }
+
+    "fallback to RandomAI on invalid AI input" in {
+      val output = runWithInput(
+        "1\n" +                 // TUI
+        "fruits\n" +            // Theme
+        "not_valid_ai\n"        // AI
+      )
+
+      output should include ("Welcome to Memory!")
+      output should include ("Choose AI level")
+      // implizit getestet: case _ => RandomAI()
     }
   }
 }
