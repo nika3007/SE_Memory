@@ -1,6 +1,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/nika3007/SE_Memory/badge.svg?branch=main&delay=5)](https://coveralls.io/github/nika3007/SE_Memory?branch=main)
 
-A Memory card game implemented in Scala 3 for a SE.
+A Memory card game implemented in Scala 3 for SE.
 The game can be played via:
 
 	•	TUI (Text-based UI)
