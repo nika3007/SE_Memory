@@ -3,4 +3,4 @@
 SE-AIN3 Projekt: Memory-Spiel
 Suche nach zwei oder vier identischen Karten 
 
- [Project Presentation (PDF)](SE-Memory-Präsentation.pdf)
+[Presentation (PDF)](./SE-Memory-Präsentation.pdf)
