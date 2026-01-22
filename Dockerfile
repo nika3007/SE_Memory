@@ -3,3 +3,5 @@ WORKDIR /memory
 ADD . /memory
 CMD sbt run
 
+# docker build -t se-memory .
+# docker run -it --rm se-memory

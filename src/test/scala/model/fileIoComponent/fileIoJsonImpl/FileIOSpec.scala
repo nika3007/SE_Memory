@@ -6,11 +6,11 @@ import model.{Board, Card}
 
 import java.io.File
 
-final class FileIOSpec extends AnyWordSpec with Matchers {
+final class FileIOSpec extends AnyWordSpec with Matchers:
 
   "FileIOJson" should {
 
-    "save and load a board completely" in {
+    "save and load board and touch every json field explicitly" in {
       val fileIO = new FileIO
 
       val board = Board(Vector(
@@ -18,20 +18,27 @@ final class FileIOSpec extends AnyWordSpec with Matchers {
         Card(1, "B", isFaceUp = false, isMatched = true)
       ))
 
-      // save
       fileIO.save(board)
-      new File("memory.json").exists() shouldBe true
+      val file = new File("memory.json")
+      file.exists() shouldBe true
 
-      // load
       val loaded = fileIO.load
 
-      // assertions → deckt ALLE roten Zeilen ab
       loaded.cards.size shouldBe 2
-      loaded.cards.map(_.id) shouldBe board.cards.map(_.id)
-      loaded.cards.map(_.symbol) shouldBe board.cards.map(_.symbol)
-      loaded.cards.map(_.isFaceUp) shouldBe board.cards.map(_.isFaceUp)
-      loaded.cards.map(_.isMatched) shouldBe board.cards.map(_.isMatched)
+
+      val c0 = loaded.cards.head
+      val c1 = loaded.cards(1)
+
+      c0.id shouldBe 0
+      c0.symbol shouldBe "A"
+      c0.isFaceUp shouldBe true
+      c0.isMatched shouldBe false
+
+      c1.id shouldBe 1
+      c1.symbol shouldBe "B"
+      c1.isFaceUp shouldBe false
+      c1.isMatched shouldBe true
+
+      file.delete() shouldBe true
     }
   }
-}
-
